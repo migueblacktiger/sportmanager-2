@@ -1,0 +1,349 @@
+{
+  "info": {
+    "name": "ms_security",
+    "description": "Colección para el microservicio de seguridad (puerto 8181).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8181"
+    },
+    {
+      "key": "userId",
+      "value": "1"
+    },
+    {
+      "key": "sessionId",
+      "value": "1"
+    },
+    {
+      "key": "profileId",
+      "value": "1"
+    },
+    {
+      "key": "roleId",
+      "value": "1"
+    },
+    {
+      "key": "permissionId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Crear usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Pérez\",\n  \"email\": \"juan@gmail.com\",\n  \"password\": \"12345678\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users"
+          }
+        },
+        {
+          "name": "Obtener usuario por id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Usuario con perfil",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}/detail"
+          }
+        },
+        {
+          "name": "Usuario con sesiones",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}/detail-with-sessions"
+          }
+        },
+        {
+          "name": "Actualizar usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Juan Pérez\",\n  \"email\": \"juan@gmail.com\",\n  \"password\": \"12345678\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        },
+        {
+          "name": "Eliminar usuario",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/users/{{userId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sessions",
+      "item": [
+        {
+          "name": "Crear sesión",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"token-iphone-14-pro\",\n  \"expiration\": \"2026-12-29T18:30:00\",\n  \"code2FA\": \"381924\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}/sessions"
+          }
+        },
+        {
+          "name": "Listar sesiones del usuario",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}/sessions"
+          }
+        },
+        {
+          "name": "Obtener sesión",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users/{{userId}}/sessions/{{sessionId}}"
+          }
+        },
+        {
+          "name": "Actualizar sesión",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"token-computador-personal\",\n  \"expiration\": \"2026-12-30T10:00:00\",\n  \"code2FA\": \"794215\"\n}"
+            },
+            "url": "{{baseUrl}}/api/users/{{userId}}/sessions/{{sessionId}}"
+          }
+        },
+        {
+          "name": "Eliminar sesión",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/users/{{userId}}/sessions/{{sessionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profiles",
+      "item": [
+        {
+          "name": "Crear perfil",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": 1,\n  \"phone\": \"3001234567\",\n  \"birthDate\": \"1998-05-21\"\n}"
+            },
+            "url": "{{baseUrl}}/api/profiles"
+          }
+        },
+        {
+          "name": "Listar perfiles",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/profiles"
+          }
+        },
+        {
+          "name": "Obtener perfil",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/profiles/{{profileId}}"
+          }
+        },
+        {
+          "name": "Actualizar perfil",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"3009876543\",\n  \"birthDate\": \"1998-05-21\"\n}"
+            },
+            "url": "{{baseUrl}}/api/profiles/{{profileId}}"
+          }
+        },
+        {
+          "name": "Eliminar perfil",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/profiles/{{profileId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Roles",
+      "item": [
+        {
+          "name": "Crear rol",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ADMIN\",\n  \"description\": \"Administrador del sistema\"\n}"
+            },
+            "url": "{{baseUrl}}/api/roles"
+          }
+        },
+        {
+          "name": "Listar roles",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/roles"
+          }
+        },
+        {
+          "name": "Obtener rol",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/roles/{{roleId}}"
+          }
+        },
+        {
+          "name": "Actualizar rol",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"ADMIN\",\n  \"description\": \"Administrador actualizado\"\n}"
+            },
+            "url": "{{baseUrl}}/api/roles/{{roleId}}"
+          }
+        },
+        {
+          "name": "Eliminar rol",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/roles/{{roleId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "Crear permiso",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"/api/users\",\n  \"method\": \"GET\",\n  \"model\": \"User\"\n}"
+            },
+            "url": "{{baseUrl}}/api/permissions"
+          }
+        },
+        {
+          "name": "Listar permisos",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/permissions"
+          }
+        },
+        {
+          "name": "Obtener permiso",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/permissions/{{permissionId}}"
+          }
+        },
+        {
+          "name": "Actualizar permiso",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"url\": \"/api/users\",\n  \"method\": \"POST\",\n  \"model\": \"User\"\n}"
+            },
+            "url": "{{baseUrl}}/api/permissions/{{permissionId}}"
+          }
+        },
+        {
+          "name": "Eliminar permiso",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/permissions/{{permissionId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
