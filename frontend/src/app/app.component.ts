@@ -5,26 +5,15 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom, forkJoin } from 'rxjs';
 import { ApiService, AuthResponse, PermissionDto, RoleDto, RolePermissionDto, UserDetailDto, UserDto, UserRoleDto } from './api.service';
 import { TOKEN_KEY } from './api.config';
+import { PermissionManagementComponent } from './features/security/permission-management/permission-management.component';
+import { RolePermissionAssignmentComponent } from './features/security/role-permission-assignment/role-permission-assignment.component';
 
 type Page = 'home'|'login'|'register'|'forgot'|'dashboard'|'sports'|'teams'|'players'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
 interface Sport { name:string; category:string; subs:string[]; status:'Activo'|'Inactivo'; description:string; teams:number; icon:string; }
-/** Fila de la matriz: un modelo (recurso) y, por operación, los ids de permiso que le corresponden. */
-interface MatrixRow { model:string; label:string; icon:string; group:string; cells:number[][]; }
-
 const PUBLIC_PAGES: Page[] = ['home','login','register','forgot'];
 const ADMIN_PAGES: Page[] = ['users','roles','permissions','role-permissions'];
 const ADMIN_ROLE = 'administrador';
-/** Orden de columnas de la matriz. */
-const OPERATIONS = ['Ver','Listar','Crear','Actualizar','Eliminar'];
-const MODEL_LABELS: Record<string,string> = {
-  User:'Usuarios', Profile:'Perfiles', Role:'Roles', Permission:'Permisos',
-  UserRole:'Roles de usuario', RolePermission:'Permisos de rol', Session:'Sesiones'
-};
-const MODEL_ICONS: Record<string,string> = {
-  User:'♙', Profile:'☆', Role:'♧', Permission:'⚿', UserRole:'♧', RolePermission:'▦', Session:'⌂'
-};
-
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule], templateUrl:'./app.component.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RolePermissionAssignmentComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
 
@@ -64,13 +53,8 @@ export class AppComponent implements OnInit {
   detailLoading = false;
   detailError = '';
 
-  /* ---------- Matriz rol-permisos ---------- */
-  readonly operations = OPERATIONS;
-  selectedRoleId: number | null = null;
-  matrixRows: MatrixRow[] = [];
-  assigned = new Set<number>();
-  savedAssigned = new Set<number>();
-  matrixSaving = false;
+  /* ---------- Selección de rol desde otras pantallas administrativas ---------- */
+  requestedRoleId: number | null = null;
 
   /* ---------- Modales de administración ---------- */
   saving = false;
@@ -79,10 +63,6 @@ export class AppComponent implements OnInit {
   userForm = { id: null as number|null, name:'', email:'', password:'', phone:'', birthDate:'', profileId: null as number|null, roleIds: [] as number[] };
   roleModal = false;
   roleForm = { id: null as number|null, name:'', description:'' };
-  permModal = false;
-  permForm = { id: null as number|null, url:'', method:'GET', model:'' };
-  readonly methods = ['GET','POST','PUT','PATCH','DELETE'];
-
   /* ---------- Perfil propio ---------- */
   profileForm = { name:'', email:'', password:'', phone:'', birthDate:'', profileId: null as number|null };
   profileError = '';
@@ -162,9 +142,6 @@ export class AppComponent implements OnInit {
       next:d=>{
         this.apiUsers=d.users; this.apiRoles=d.roles; this.apiPermissions=d.permissions;
         this.allUserRoles=d.userRoles; this.allRolePerms=d.rolePerms;
-        this.buildMatrix();
-        if(this.selectedRoleId===null || !this.apiRoles.some(r=>r.id===this.selectedRoleId)) this.selectedRoleId=this.apiRoles[0]?.id ?? null;
-        if(this.selectedRoleId!==null) this.loadRolePermissions(this.selectedRoleId);
         this.dataLoading=false;
       },
       error:e=>{ this.dataLoading=false; this.showToast(this.api.errorMessage(e)); }
@@ -178,8 +155,6 @@ export class AppComponent implements OnInit {
   /* Listados filtrados por el buscador */
   get filteredUsers(){ const q=this.search.toLowerCase(); return this.apiUsers.filter(u=>(u.name+' '+u.email).toLowerCase().includes(q)); }
   get filteredRoles(){ const q=this.search.toLowerCase(); return this.apiRoles.filter(r=>(r.name+' '+r.description).toLowerCase().includes(q)); }
-  get filteredPermissions(){ const q=this.search.toLowerCase(); return this.apiPermissions.filter(p=>(p.model+' '+p.url+' '+p.method).toLowerCase().includes(q)); }
-
   /* Tarjetas de estadísticas */
   get usersWithRole(){ return this.apiUsers.filter(u=>this.allUserRoles.some(ur=>ur.userId===u.id)).length; }
   get rolesWithUsers(){ return this.apiRoles.filter(r=>this.userCountOfRole(r.id)>0).length; }
@@ -287,105 +262,19 @@ export class AppComponent implements OnInit {
   deleteRole(r:RoleDto){
     if(!confirm(`¿Eliminar el rol ${r.name}?`)) return;
     this.api.deleteRole(r.id).subscribe({
-      next:()=>{ this.showToast('Rol eliminado.'); if(this.selectedRoleId===r.id) this.selectedRoleId=null; this.loadAdminData(); },
+      next:()=>{ this.showToast('Rol eliminado.'); if(this.requestedRoleId===r.id) this.requestedRoleId=null; this.loadAdminData(); },
       error:e=>this.showToast(this.api.errorMessage(e))
     });
   }
-  openRolePermissions(r:RoleDto){ this.selectedRoleId=r.id; this.nav('role-permissions'); }
+  openRolePermissions(r:RoleDto){ this.requestedRoleId=r.id; this.nav('role-permissions'); }
 
   /* ======================= Permisos ======================= */
-  modelLabel(model:string){ return MODEL_LABELS[model] ?? model; }
-  operationOf(p:PermissionDto):string{ return OPERATIONS[this.operationIndex(p)] ?? p.method; }
-  openNewPermission(){ this.permForm={id:null,url:'',method:'GET',model:''}; this.formError=''; this.permModal=true; }
-  openEditPermission(p:PermissionDto){ this.permForm={id:p.id,url:p.url,method:p.method,model:p.model}; this.formError=''; this.permModal=true; }
-  savePermission(){
-    const f=this.permForm; this.formError='';
-    if(!f.url.trim()||!f.model.trim()){this.formError='La URL y el modelo son obligatorios.';return;}
-    const body={url:f.url.trim(),method:f.method,model:f.model.trim()};
-    this.saving=true;
-    const request = f.id===null ? this.api.createPermission(body) : this.api.updatePermission(f.id,body);
-    request.subscribe({
-      next:()=>{ this.saving=false; this.permModal=false; this.showToast('Permiso guardado correctamente.'); this.loadAdminData(); },
-      error:e=>{ this.saving=false; this.formError=this.api.errorMessage(e); }
-    });
-  }
-  deletePermission(p:PermissionDto){
-    if(!confirm(`¿Eliminar el permiso ${p.method} ${p.url}?`)) return;
-    this.api.deletePermission(p.id).subscribe({
-      next:()=>{ this.showToast('Permiso eliminado.'); this.loadAdminData(); },
-      error:e=>this.showToast(this.api.errorMessage(e))
-    });
-  }
-
-  /* ======================= Asignar permisos a roles ======================= */
-  /** Columna de la matriz según el método HTTP (y, para GET, si la URL apunta a un recurso concreto). */
-  private operationIndex(p:PermissionDto):number{
-    switch(p.method.toUpperCase()){
-      case 'GET': return p.url.trim().endsWith('}') ? 0 : 1;
-      case 'POST': return 2;
-      case 'PUT': case 'PATCH': return 3;
-      case 'DELETE': return 4;
-      default: return 1;
-    }
-  }
-  buildMatrix(){
-    const byModel = new Map<string,MatrixRow>();
-    for(const p of this.apiPermissions){
-      let row=byModel.get(p.model);
-      if(!row){
-        row={model:p.model,label:this.modelLabel(p.model),icon:MODEL_ICONS[p.model] ?? '▦',group:MODEL_LABELS[p.model]?'Administración':'Otros módulos',cells:OPERATIONS.map(()=>[] as number[])};
-        byModel.set(p.model,row);
-      }
-      row.cells[this.operationIndex(p)].push(p.id);
-    }
-    this.matrixRows=[...byModel.values()];
-  }
-  get groups(){ return [...new Set(this.matrixRows.map(r=>r.group))]; }
-  get selectedRole(){ return this.apiRoles.find(r=>r.id===this.selectedRoleId); }
-  get assignedCount(){ return this.assigned.size; }
-  get allPermissions(){ return this.apiPermissions.length; }
-  get modulesWithAccess(){ return this.matrixRows.filter(r=>r.cells.some(ids=>ids.some(id=>this.assigned.has(id)))).length; }
-  get usersOfSelectedRole(){ return this.selectedRoleId===null ? 0 : this.userCountOfRole(this.selectedRoleId); }
-
-  selectRole(roleId:number|null){ this.selectedRoleId=roleId; if(roleId!==null) this.loadRolePermissions(roleId); else { this.assigned=new Set(); this.savedAssigned=new Set(); } }
-  loadRolePermissions(roleId:number, notify=false){
-    this.api.getPermissionsOfRole(roleId).subscribe({
-      next:rps=>{
-        if(this.selectedRoleId!==roleId) return;
-        this.savedAssigned=new Set(rps.map(rp=>rp.permission.id));
-        this.assigned=new Set(this.savedAssigned);
-        if(notify) this.showToast(`Permisos de ${this.selectedRole?.name ?? 'el rol'} cargados desde el servidor.`);
-      },
-      error:e=>this.showToast(this.api.errorMessage(e))
-    });
-  }
-  cellChecked(row:MatrixRow,i:number){ const ids=row.cells[i]; return ids.length>0 && ids.every(id=>this.assigned.has(id)); }
-  togglePermission(row:MatrixRow,i:number){
-    const ids=row.cells[i]; if(!ids.length) return;
-    const next=new Set(this.assigned);
-    if(this.cellChecked(row,i)) ids.forEach(id=>next.delete(id)); else ids.forEach(id=>next.add(id));
-    this.assigned=next;
-  }
-  reloadPermissions(){ if(this.selectedRoleId!==null) this.loadRolePermissions(this.selectedRoleId,true); }
-  savePermissions(){
-    const role=this.selectedRole; if(!role){this.showToast('Selecciona un rol.');return;}
-    this.matrixSaving=true;
-    this.api.replacePermissionsOfRole(role.id,[...this.assigned]).subscribe({
-      next:rps=>{
-        this.matrixSaving=false;
-        this.savedAssigned=new Set(rps.map(rp=>rp.permission.id));
-        this.assigned=new Set(this.savedAssigned);
-        this.allRolePerms=[...this.allRolePerms.filter(rp=>rp.roleId!==role.id),...rps];
-        this.showToast(`Permisos de ${role.name} guardados correctamente.`);
-        this.refreshSession();
-      },
-      error:e=>{ this.matrixSaving=false; this.showToast(this.api.errorMessage(e)); }
-    });
-  }
-  resetPermissions(){
-    if(confirm('¿Restablecer la matriz de permisos a su último estado guardado?')){
-      this.assigned=new Set(this.savedAssigned); this.showToast('La matriz se ha restablecido.');
-    }
+  onRolePermissionsChanged(event:{roleId:number;rolePermissions:RolePermissionDto[]}){
+    this.allRolePerms=[
+      ...this.allRolePerms.filter(rolePermission=>rolePermission.roleId!==event.roleId),
+      ...event.rolePermissions
+    ];
+    this.refreshSession();
   }
 
   /* ======================= Perfil propio ======================= */

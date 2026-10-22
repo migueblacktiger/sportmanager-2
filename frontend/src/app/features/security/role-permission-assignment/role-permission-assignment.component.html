@@ -1,0 +1,107 @@
+<section class="admin-page">
+  <div class="admin-subnav">
+    <button (click)="navigationRequested.emit('users')">♙ Usuarios</button>
+    <button (click)="navigationRequested.emit('roles')">♧ Roles</button>
+    <button (click)="navigationRequested.emit('permissions')">⚿ Permisos</button>
+    <button class="selected">▦ Asignar permisos</button>
+  </div>
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">CENTRO DE CONTROL · SEGURIDAD</span>
+      <h1>Asignar permisos a roles</h1>
+      <p>Administra de manera centralizada las operaciones que puede ejecutar cada rol del sistema.</p>
+    </div>
+    <span class="admin-chip">♢ MODO ADMINISTRADOR</span>
+  </div>
+  <div class="role-toolbar panel">
+    <div class="role-select">
+      <label>Rol seleccionado</label>
+      <select [ngModel]="selectedRoleId" (ngModelChange)="selectRole($event)">
+        <option *ngFor="let role of roles" [ngValue]="role.id">{{role.name}}</option>
+      </select>
+    </div>
+    <div class="toolbar-buttons">
+      <button class="btn btn-outline" [disabled]="selectedRoleId===null" (click)="reloadPermissions()">⊞ Cargar permisos</button>
+      <button class="btn btn-primary" [disabled]="matrixSaving||selectedRoleId===null" (click)="savePermissions()">▣ Guardar cambios</button>
+      <button class="btn btn-outline" [disabled]="selectedRoleId===null" (click)="resetPermissions()">↻ Restablecer</button>
+    </div>
+  </div>
+  <div class="admin-columns">
+    <div class="admin-main">
+      <div class="inline-notice info">
+        <span>ⓘ</span> Cada casilla corresponde a un endpoint del catálogo de permisos. Los cambios se aplican al pulsar «Guardar cambios».
+      </div>
+      <div class="panel matrix-panel">
+        <div class="panel-heading">
+          <div>
+            <h2>Matriz de permisos del rol</h2>
+            <p>Selecciona las operaciones permitidas para <b>{{selectedRole?.name}}</b>.</p>
+          </div>
+          <span class="total-chip">{{assignedCount}} asignados</span>
+        </div>
+        <div class="matrix-wrap">
+          <table class="permission-table">
+            <thead>
+              <tr><th>Recurso</th><th *ngFor="let operation of operations">{{operation}}</th></tr>
+            </thead>
+            <tbody>
+              <ng-container *ngFor="let group of groups">
+                <tr class="group-row"><td colspan="6"><span>⌄</span>{{group}}</td></tr>
+                <ng-container *ngFor="let row of matrixRows">
+                  <tr *ngIf="row.group===group">
+                    <td><span class="resource-icon">{{row.icon}}</span>{{row.label}}</td>
+                    <td *ngFor="let ids of row.cells;let i=index">
+                      <label class="permission-check" *ngIf="ids.length; else noPermission">
+                        <input type="checkbox" [checked]="cellChecked(row,i)" (change)="togglePermission(row,i)">
+                        <span></span>
+                      </label>
+                      <ng-template #noPermission><span class="muted">—</span></ng-template>
+                    </td>
+                  </tr>
+                </ng-container>
+              </ng-container>
+            </tbody>
+          </table>
+          <div class="empty-state" *ngIf="!matrixRows.length">
+            {{dataLoading?'Cargando permisos…':'No hay permisos en el catálogo. Créalos en la pestaña Permisos.'}}
+          </div>
+        </div>
+        <div class="matrix-footer">
+          <span><i class="green-dot"></i> {{assignedCount}} permisos asignados</span>
+          <span>{{allPermissions-assignedCount}} sin asignar</span>
+        </div>
+      </div>
+    </div>
+    <aside class="admin-summary">
+      <div class="panel summary-panel">
+        <h3><span class="summary-icon">♙</span> Resumen del rol</h3>
+        <div class="summary-line"><span>Nombre del rol:</span><b>{{selectedRole?.name ?? '—'}}</b></div>
+        <div class="summary-line"><span>Descripción:</span><b>{{selectedRole?.description ?? '—'}}</b></div>
+        <div class="summary-separator"></div>
+        <div class="summary-line"><span>♧ Usuarios asociados</span><b>{{usersOfSelectedRole}}</b></div>
+        <div class="summary-line"><span>⚿ Total permisos asignados</span><b>{{assignedCount}}</b></div>
+        <div class="summary-line"><span>⬡ Módulos con acceso</span><b>{{modulesWithAccess}}</b></div>
+        <div class="permission-stats">
+          <div><span>♢</span><small>Disponibles</small><b>{{allPermissions}}</b></div>
+          <div><span class="lime">✓</span><small>Asignados</small><b class="lime">{{assignedCount}}</b></div>
+          <div><span>⊠</span><small>Sin asignar</small><b>{{allPermissions-assignedCount}}</b></div>
+        </div>
+      </div>
+      <div class="panel legend-panel">
+        <h3>Leyenda</h3>
+        <p><span class="legend-check">✓</span> Permiso asignado</p>
+        <p><span class="legend-empty"></span> Permiso no asignado</p>
+        <p><span class="muted">—</span> Sin permiso definido para esa operación</p>
+      </div>
+      <div class="panel rules-panel">
+        <h3>⚖ Reglas de acceso</h3>
+        <ul>
+          <li>Si al menos uno de los roles del usuario posee el permiso, la operación se permite.</li>
+          <li>Si ninguno de sus roles posee el permiso requerido, el acceso se deniega.</li>
+          <li>Los cambios aplican a todos los usuarios que tengan asignado este rol.</li>
+        </ul>
+      </div>
+      <div class="warning-note">⚠ Retirar un permiso del rol no elimina el permiso del sistema.</div>
+    </aside>
+  </div>
+</section>
