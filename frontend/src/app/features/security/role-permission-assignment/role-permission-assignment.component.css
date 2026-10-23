@@ -1,3 +1,29 @@
 :host {
   display: block;
 }
+
+.permission-check input:indeterminate + span {
+  background: linear-gradient(135deg, #64f45b, #2cbb2d);
+  border-color: #8bff76;
+  box-shadow: 0 0 9px #4bff4d44;
+}
+
+.permission-check input:indeterminate + span::after {
+  content: '';
+  width: 9px;
+  height: 2px;
+  background: #07111d;
+}
+
+.legend-partial {
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid var(--green);
+  border-radius: 3px;
+  background: linear-gradient(135deg, #64f45b, #2cbb2d);
+  color: #07111d;
+  font-weight: 700;
+  line-height: 1;
+}

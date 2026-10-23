@@ -12,13 +12,29 @@ export const PERMISSION_MODEL_LABELS: Record<string, string> = {
   Session: 'Sesiones'
 };
 
+const GET_LIST_ENDPOINTS = new Set([
+  '/api/users',
+  '/api/profiles',
+  '/api/roles',
+  '/api/permissions',
+  '/api/user-roles',
+  '/api/user-roles/users/{userId}',
+  '/api/user-roles/roles/{roleId}',
+  '/api/role-permissions',
+  '/api/role-permissions/roles/{roleId}',
+  '/api/users/{userId}/sessions'
+]);
+
 export function permissionModelLabel(model: string): string {
   return PERMISSION_MODEL_LABELS[model] ?? model;
 }
 
 export function permissionOperationIndex(permission: PermissionDto): number {
   switch (permission.method.toUpperCase()) {
-    case 'GET': return permission.url.trim().endsWith('}') ? 0 : 1;
+    case 'GET': {
+      const url = permission.url.trim().replace(/\/+$/, '');
+      return GET_LIST_ENDPOINTS.has(url) ? 1 : 0;
+    }
     case 'POST': return 2;
     case 'PUT': case 'PATCH': return 3;
     case 'DELETE': return 4;

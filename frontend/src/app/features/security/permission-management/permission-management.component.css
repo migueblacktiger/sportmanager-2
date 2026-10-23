@@ -1,3 +1,49 @@
 :host {
   display: block;
 }
+
+.permission-toolbar {
+  flex-wrap: wrap;
+}
+
+.permission-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.permission-filter select {
+  min-width: 145px;
+}
+
+.clear-filters {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.permission-toolbar .toolbar-count {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .permission-toolbar .search-box {
+    min-width: min(100%, 250px);
+  }
+
+  .permission-toolbar .toolbar-count {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .permission-toolbar > * {
+    width: 100%;
+  }
+
+  .permission-filter select,
+  .clear-filters {
+    width: 100%;
+  }
+}

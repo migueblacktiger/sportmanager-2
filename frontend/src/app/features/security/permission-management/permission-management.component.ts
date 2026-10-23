@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService, PermissionDto } from '../../../api.service';
 import { permissionModelLabel, permissionOperationLabel } from './permission-display';
@@ -13,7 +13,7 @@ type AdministrativePage = 'users' | 'roles' | 'role-permissions';
   templateUrl: './permission-management.component.html',
   styleUrl: './permission-management.component.css'
 })
-export class PermissionManagementComponent {
+export class PermissionManagementComponent implements OnChanges {
   private api = inject(ApiService);
 
   @Input() permissions: PermissionDto[] = [];
@@ -24,17 +24,54 @@ export class PermissionManagementComponent {
   @Output() notification = new EventEmitter<string>();
 
   search = '';
+  selectedModel = '';
+  selectedMethod = '';
   permModal = false;
   saving = false;
   formError = '';
   permForm = { id: null as number | null, url: '', method: 'GET', model: '' };
   readonly methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['permissions']) return;
+
+    if (this.selectedModel && !this.models.includes(this.selectedModel)) {
+      this.selectedModel = '';
+    }
+    if (this.selectedMethod && !this.httpMethods.includes(this.selectedMethod)) {
+      this.selectedMethod = '';
+    }
+  }
+
+  get models(): string[] {
+    return [...new Set(this.permissions.map(permission => permission.model))]
+      .sort((first, second) => first.localeCompare(second));
+  }
+
+  get httpMethods(): string[] {
+    return [...new Set(this.permissions.map(permission => permission.method.toUpperCase()))]
+      .sort((first, second) => first.localeCompare(second));
+  }
+
   get filteredPermissions(): PermissionDto[] {
-    const query = this.search.toLowerCase();
-    return this.permissions.filter(permission =>
-      (permission.model + ' ' + permission.url + ' ' + permission.method).toLowerCase().includes(query)
-    );
+    const query = this.search.trim().toLowerCase();
+    return this.permissions.filter(permission => {
+      const matchesSearch = !query
+        || (permission.model + ' ' + permission.url + ' ' + permission.method).toLowerCase().includes(query);
+      const matchesModel = !this.selectedModel || permission.model === this.selectedModel;
+      const matchesMethod = !this.selectedMethod || permission.method.toUpperCase() === this.selectedMethod;
+      return matchesSearch && matchesModel && matchesMethod;
+    });
+  }
+
+  get hasActiveFilters(): boolean {
+    return !!this.search.trim() || !!this.selectedModel || !!this.selectedMethod;
+  }
+
+  clearFilters(): void {
+    this.search = '';
+    this.selectedModel = '';
+    this.selectedMethod = '';
   }
 
   modelLabel(model: string): string {

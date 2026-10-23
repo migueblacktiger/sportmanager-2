@@ -34,11 +34,26 @@
   </div>
 
   <div class="panel list-panel">
-    <div class="toolbar">
+    <div class="toolbar permission-toolbar">
       <div class="search-box">
         <span>⌕</span>
         <input [(ngModel)]="search" placeholder="Buscar">
       </div>
+      <label class="permission-filter">
+        <span>Recurso</span>
+        <select [(ngModel)]="selectedModel" aria-label="Filtrar por recurso o modelo">
+          <option value="">Todos</option>
+          <option *ngFor="let model of models" [value]="model">{{model}}</option>
+        </select>
+      </label>
+      <label class="permission-filter">
+        <span>Método HTTP</span>
+        <select [(ngModel)]="selectedMethod" aria-label="Filtrar por método HTTP">
+          <option value="">Todos</option>
+          <option *ngFor="let method of httpMethods" [value]="method">{{method}}</option>
+        </select>
+      </label>
+      <button class="btn btn-outline clear-filters" [disabled]="!hasActiveFilters" (click)="clearFilters()">Limpiar filtros</button>
       <span class="toolbar-count">{{filteredPermissions.length}} permisos</span>
     </div>
     <table>
@@ -61,7 +76,9 @@
       </tbody>
     </table>
     <div class="empty-state" *ngIf="dataLoading">Cargando datos…</div>
-    <div class="empty-state" *ngIf="!dataLoading&&!filteredPermissions.length">No hay registros que mostrar.</div>
+    <div class="empty-state" *ngIf="!dataLoading&&!filteredPermissions.length">
+      {{hasActiveFilters?'No hay permisos que coincidan con los criterios seleccionados.':'No hay registros que mostrar.'}}
+    </div>
   </div>
 </section>
 

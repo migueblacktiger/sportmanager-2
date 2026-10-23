@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,6 +16,8 @@ const ADMIN_ROLE = 'administrador';
 @Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RolePermissionAssignmentComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
+  @ViewChild(RolePermissionAssignmentComponent)
+  private rolePermissionAssignment?: RolePermissionAssignmentComponent;
 
   page: Page = 'home';
   mobileMenu = false;
@@ -124,6 +126,9 @@ export class AppComponent implements OnInit {
   nav(page:Page){
     if(!PUBLIC_PAGES.includes(page) && !this.session){ this.page='login'; this.mobileMenu=false; this.showToast('Inicia sesión para continuar.'); return; }
     if(ADMIN_PAGES.includes(page) && !this.isAdmin){ this.mobileMenu=false; this.showToast('Necesitas el rol Administrador para acceder a Seguridad.'); return; }
+    if(page===this.page && page==='role-permissions'){ this.mobileMenu=false; return; }
+    if(this.page==='role-permissions' && this.rolePermissionAssignment
+      && !this.rolePermissionAssignment.confirmAbandonPendingChanges()) return;
     this.page=page; this.mobileMenu=false; this.toast=''; this.search='';
     if(ADMIN_PAGES.includes(page)) this.loadAdminData();
     if(page==='profile') this.loadMyProfile();

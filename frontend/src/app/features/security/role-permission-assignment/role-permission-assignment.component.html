@@ -16,14 +16,14 @@
   <div class="role-toolbar panel">
     <div class="role-select">
       <label>Rol seleccionado</label>
-      <select [ngModel]="selectedRoleId" (ngModelChange)="selectRole($event)">
+      <select #roleSelector="ngModel" [ngModel]="selectedRoleId" [disabled]="matrixSaving" (ngModelChange)="selectRole($event)">
         <option *ngFor="let role of roles" [ngValue]="role.id">{{role.name}}</option>
       </select>
     </div>
     <div class="toolbar-buttons">
-      <button class="btn btn-outline" [disabled]="selectedRoleId===null" (click)="reloadPermissions()">⊞ Cargar permisos</button>
+      <button class="btn btn-outline" [disabled]="matrixSaving||selectedRoleId===null" (click)="reloadPermissions()">⊞ Cargar permisos</button>
       <button class="btn btn-primary" [disabled]="matrixSaving||selectedRoleId===null" (click)="savePermissions()">▣ Guardar cambios</button>
-      <button class="btn btn-outline" [disabled]="selectedRoleId===null" (click)="resetPermissions()">↻ Restablecer</button>
+      <button class="btn btn-outline" [disabled]="matrixSaving||selectedRoleId===null" (click)="resetPermissions()">↻ Restablecer</button>
     </div>
   </div>
   <div class="admin-columns">
@@ -52,7 +52,14 @@
                     <td><span class="resource-icon">{{row.icon}}</span>{{row.label}}</td>
                     <td *ngFor="let ids of row.cells;let i=index">
                       <label class="permission-check" *ngIf="ids.length; else noPermission">
-                        <input type="checkbox" [checked]="cellChecked(row,i)" (change)="togglePermission(row,i)">
+                        <input
+                          type="checkbox"
+                          [checked]="cellChecked(row,i)"
+                          [indeterminate]="cellIndeterminate(row,i)"
+                          [attr.aria-checked]="cellState(row,i)==='partial'?'mixed':cellChecked(row,i)"
+                          [attr.aria-label]="row.label+' - '+operations[i]+': '+(cellState(row,i)==='partial'?'parcial':cellChecked(row,i)?'asignado':'sin asignar')"
+                          [disabled]="matrixSaving"
+                          (change)="togglePermission(row,i)">
                         <span></span>
                       </label>
                       <ng-template #noPermission><span class="muted">—</span></ng-template>
@@ -91,6 +98,7 @@
         <h3>Leyenda</h3>
         <p><span class="legend-check">✓</span> Permiso asignado</p>
         <p><span class="legend-empty"></span> Permiso no asignado</p>
+        <p><span class="legend-partial" aria-hidden="true">−</span> Permiso parcialmente asignado</p>
         <p><span class="muted">—</span> Sin permiso definido para esa operación</p>
       </div>
       <div class="panel rules-panel">
