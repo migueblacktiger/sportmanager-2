@@ -101,6 +101,9 @@ export class RolePermissionAssignmentComponent implements OnChanges {
     const byModel = new Map<string, MatrixRow>();
     for (const permission of this.permissions) {
       let row = byModel.get(permission.model);
+      const operationIndex = permissionOperationIndex(permission);
+      if (operationIndex === null) continue;
+
       if (!row) {
         row = {
           model: permission.model,
@@ -111,7 +114,7 @@ export class RolePermissionAssignmentComponent implements OnChanges {
         };
         byModel.set(permission.model, row);
       }
-      row.cells[permissionOperationIndex(permission)].push(permission.id);
+      row.cells[operationIndex].push(permission.id);
     }
     this.matrixRows = [...byModel.values()];
   }

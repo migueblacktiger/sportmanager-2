@@ -26,6 +26,7 @@ export class PermissionManagementComponent implements OnChanges {
   search = '';
   selectedModel = '';
   selectedMethod = '';
+  selectedPermission: PermissionDto | null = null;
   permModal = false;
   saving = false;
   formError = '';
@@ -80,6 +81,14 @@ export class PermissionManagementComponent implements OnChanges {
 
   operationOf(permission: PermissionDto): string {
     return permissionOperationLabel(permission);
+  }
+
+  openPermissionDetail(permission: PermissionDto): void {
+    this.selectedPermission = permission;
+  }
+
+  closePermissionDetail(): void {
+    this.selectedPermission = null;
   }
 
   openNewPermission(): void {

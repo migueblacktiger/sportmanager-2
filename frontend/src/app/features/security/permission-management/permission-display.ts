@@ -1,4 +1,4 @@
-import { PermissionDto } from '../../../api.service';
+import type { PermissionDto } from '../../../api.service';
 
 export const PERMISSION_OPERATIONS = ['Ver', 'Listar', 'Crear', 'Actualizar', 'Eliminar'];
 
@@ -29,7 +29,7 @@ export function permissionModelLabel(model: string): string {
   return PERMISSION_MODEL_LABELS[model] ?? model;
 }
 
-export function permissionOperationIndex(permission: PermissionDto): number {
+export function permissionOperationIndex(permission: PermissionDto): number | null {
   switch (permission.method.toUpperCase()) {
     case 'GET': {
       const url = permission.url.trim().replace(/\/+$/, '');
@@ -38,10 +38,13 @@ export function permissionOperationIndex(permission: PermissionDto): number {
     case 'POST': return 2;
     case 'PUT': case 'PATCH': return 3;
     case 'DELETE': return 4;
-    default: return 1;
+    default: return null;
   }
 }
 
 export function permissionOperationLabel(permission: PermissionDto): string {
-  return PERMISSION_OPERATIONS[permissionOperationIndex(permission)] ?? permission.method;
+  const operationIndex = permissionOperationIndex(permission);
+  return operationIndex === null
+    ? 'No clasificada'
+    : PERMISSION_OPERATIONS[operationIndex];
 }

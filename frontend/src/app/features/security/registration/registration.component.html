@@ -1,0 +1,50 @@
+<div class="registration-card">
+  <h2>Crear cuenta</h2>
+  <p class="muted">Únete a la comunidad SportManager.</p>
+
+  <form [formGroup]="form" (ngSubmit)="submitRegistration()" novalidate>
+    <label for="register-name">Nombre completo</label>
+    <input id="register-name" type="text" formControlName="name" placeholder="Tu nombre" [class.invalid-field]="fieldHasError('name')" />
+    <small class="field-error" *ngIf="fieldHasError('name')">Ingresa un nombre con al menos 2 caracteres y máximo 100; no puede contener solo espacios.</small>
+
+    <label for="register-email">Correo electrónico</label>
+    <input id="register-email" type="email" formControlName="email" placeholder="nombre@correo.com" [class.invalid-field]="fieldHasError('email')" />
+    <small class="field-error" *ngIf="fieldHasError('email')">Ingresa un correo electrónico válido.</small>
+
+    <label for="register-password">Contraseña</label>
+    <div class="password-control">
+      <input id="register-password" [type]="showPassword ? 'text' : 'password'" formControlName="password" placeholder="Mínimo 8 caracteres" [class.invalid-field]="fieldHasError('password')" />
+      <button type="button" class="password-toggle" [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'" [attr.aria-pressed]="showPassword" (click)="togglePasswordVisibility()">
+        {{ showPassword ? 'Ocultar' : 'Mostrar' }}
+      </button>
+    </div>
+    <small class="field-hint" [class.password-valid]="passwordMeetsMinimumLength" aria-live="polite">
+      {{ passwordMeetsMinimumLength ? '✓ Longitud mínima cumplida' : passwordLength + '/8 caracteres mínimos' }}
+    </small>
+    <small class="field-error" *ngIf="fieldHasError('password')">La contraseña debe tener mínimo 8 caracteres.</small>
+
+    <label for="register-confirm-password">Confirmar contraseña</label>
+    <div class="password-control">
+      <input id="register-confirm-password" [type]="showConfirmPassword ? 'text' : 'password'" formControlName="confirmPassword" placeholder="Repite la contraseña" [class.invalid-field]="confirmPasswordMissing || confirmPasswordMismatch" />
+      <button type="button" class="password-toggle" [attr.aria-label]="showConfirmPassword ? 'Ocultar confirmación de contraseña' : 'Mostrar confirmación de contraseña'" [attr.aria-pressed]="showConfirmPassword" (click)="toggleConfirmPasswordVisibility()">
+        {{ showConfirmPassword ? 'Ocultar' : 'Mostrar' }}
+      </button>
+    </div>
+    <small class="field-error" *ngIf="confirmPasswordMissing">Debes confirmar tu contraseña.</small>
+    <small class="field-error" *ngIf="!confirmPasswordMissing && confirmPasswordMismatch">Las contraseñas no coinciden.</small>
+
+    <label class="check-label terms">
+      <input type="checkbox" formControlName="acceptTerms" />
+      Acepto los términos y la política de privacidad.
+    </label>
+    <small class="field-error" *ngIf="fieldHasError('acceptTerms')">Debes aceptar los términos y la política de privacidad.</small>
+
+    <div class="server-error" *ngIf="submitError">{{ submitError }}</div>
+
+    <button type="submit" class="btn btn-primary full" [disabled]="isSubmitting">
+      {{ isSubmitting ? 'Creando cuenta...' : 'Crear mi cuenta' }} <span>→</span>
+    </button>
+  </form>
+
+  <p class="auth-foot">¿Ya tienes una cuenta? <button type="button" class="text-button" (click)="goToLogin()">Inicia sesión</button></p>
+</div>

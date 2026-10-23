@@ -6,6 +6,7 @@ import { firstValueFrom, forkJoin } from 'rxjs';
 import { ApiService, AuthResponse, PermissionDto, RoleDto, RolePermissionDto, UserDetailDto, UserDto, UserRoleDto } from './api.service';
 import { TOKEN_KEY } from './api.config';
 import { PermissionManagementComponent } from './features/security/permission-management/permission-management.component';
+import { RegistrationComponent } from './features/security/registration/registration.component';
 import { RolePermissionAssignmentComponent } from './features/security/role-permission-assignment/role-permission-assignment.component';
 
 type Page = 'home'|'login'|'register'|'forgot'|'dashboard'|'sports'|'teams'|'players'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
@@ -13,7 +14,7 @@ interface Sport { name:string; category:string; subs:string[]; status:'Activo'|'
 const PUBLIC_PAGES: Page[] = ['home','login','register','forgot'];
 const ADMIN_PAGES: Page[] = ['users','roles','permissions','role-permissions'];
 const ADMIN_ROLE = 'administrador';
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RolePermissionAssignmentComponent], templateUrl:'./app.component.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
   @ViewChild(RolePermissionAssignmentComponent)
@@ -40,7 +41,7 @@ export class AppComponent implements OnInit {
 
   /* ---------- Sesión ---------- */
   session: AuthResponse | null = null;
-  loginEmail=''; loginPassword=''; registerName=''; registerEmail=''; registerPassword=''; acceptTerms=false;
+  loginEmail=''; loginPassword='';
   authLoading = false;
 
   /* ---------- Datos de seguridad (vienen del backend) ---------- */
@@ -94,24 +95,17 @@ export class AppComponent implements OnInit {
   refreshSession(){ this.api.me().subscribe({ next:r=>{ this.session=r; }, error:()=>{} }); }
   startSession(r:AuthResponse, message:string){
     localStorage.setItem(TOKEN_KEY, r.token);
-    this.session=r; this.loginPassword=''; this.registerPassword=''; this.acceptTerms=false;
+    this.session=r; this.loginPassword='';
     this.nav('dashboard'); this.showToast(message);
+  }
+  onRegistrationSuccess(response: AuthResponse): void {
+    this.startSession(response, 'Cuenta creada correctamente. ¡Bienvenido!');
   }
   login(){
     if(!this.loginEmail.trim()||!this.loginPassword){this.showToast('Ingresa tu correo y contraseña.');return;}
     this.authLoading=true;
     this.api.login({email:this.loginEmail.trim(),password:this.loginPassword}).subscribe({
       next:r=>{ this.authLoading=false; this.startSession(r,`Bienvenido, ${r.user.name}.`); },
-      error:e=>{ this.authLoading=false; this.showToast(this.api.errorMessage(e)); }
-    });
-  }
-  register(){
-    if(!this.registerName.trim()||!this.registerEmail.trim()||!this.registerPassword){this.showToast('Completa todos los campos obligatorios.');return;}
-    if(this.registerPassword.length<8){this.showToast('La contraseña debe tener mínimo 8 caracteres.');return;}
-    if(!this.acceptTerms){this.showToast('Debes aceptar los términos y la política de privacidad.');return;}
-    this.authLoading=true;
-    this.api.register({name:this.registerName.trim(),email:this.registerEmail.trim(),password:this.registerPassword}).subscribe({
-      next:r=>{ this.authLoading=false; this.startSession(r,'Cuenta creada correctamente. ¡Bienvenido!'); },
       error:e=>{ this.authLoading=false; this.showToast(this.api.errorMessage(e)); }
     });
   }

@@ -68,6 +68,7 @@
           <td><code>{{permission.method}}</code></td>
           <td>
             <div class="action-buttons">
+              <button title="Ver detalle" aria-label="Ver detalle del permiso" (click)="openPermissionDetail(permission)">⌕</button>
               <button title="Editar" (click)="openEditPermission(permission)">✎</button>
               <button class="danger" title="Eliminar" (click)="deletePermission(permission)">♲</button>
             </div>
@@ -81,6 +82,28 @@
     </div>
   </div>
 </section>
+
+<div class="modal-backdrop" *ngIf="selectedPermission as permission" (click)="closePermissionDetail()">
+  <section class="modal-card permission-detail-modal" role="dialog" aria-modal="true" aria-labelledby="permission-detail-title" (click)="$event.stopPropagation()">
+    <div class="modal-heading">
+      <div>
+        <span class="eyebrow">CENTRO DE CONTROL · SEGURIDAD</span>
+        <h2 id="permission-detail-title">Detalle del permiso</h2>
+      </div>
+      <button class="close-button" aria-label="Cerrar detalle" (click)="closePermissionDetail()">×</button>
+    </div>
+    <dl class="permission-detail-list">
+      <div><dt>Identificador</dt><dd>{{permission.id}}</dd></div>
+      <div><dt>Modelo o recurso</dt><dd>{{modelLabel(permission.model)}}</dd></div>
+      <div><dt>URL</dt><dd><code>{{permission.url}}</code></dd></div>
+      <div><dt>Método HTTP</dt><dd><code>{{permission.method}}</code></dd></div>
+      <div><dt>Operación</dt><dd>{{operationOf(permission)}}</dd></div>
+    </dl>
+    <div class="modal-actions">
+      <button class="btn btn-outline" (click)="closePermissionDetail()">Cerrar</button>
+    </div>
+  </section>
+</div>
 
 <div class="modal-backdrop" *ngIf="permModal" (click)="permModal=false">
   <div class="modal-card" (click)="$event.stopPropagation()">
