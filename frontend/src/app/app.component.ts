@@ -2,9 +2,11 @@ import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom, forkJoin } from 'rxjs';
 import { ApiService, AuthResponse, PermissionDto, RoleDto, RolePermissionDto, UserDetailDto, UserDto, UserRoleDto } from './api.service';
 import { TOKEN_KEY } from './api.config';
+import { AuthSessionState } from './auth-session-state.service';
 import { PermissionManagementComponent } from './features/security/permission-management/permission-management.component';
 import { RegistrationComponent } from './features/security/registration/registration.component';
 import { RolePermissionAssignmentComponent } from './features/security/role-permission-assignment/role-permission-assignment.component';
@@ -17,6 +19,7 @@ const ADMIN_ROLE = 'administrador';
 @Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
+  private authSessionState = inject(AuthSessionState);
   @ViewChild(RolePermissionAssignmentComponent)
   private rolePermissionAssignment?: RolePermissionAssignmentComponent;
 
@@ -70,7 +73,12 @@ export class AppComponent implements OnInit {
   profileForm = { name:'', email:'', password:'', phone:'', birthDate:'', profileId: null as number|null };
   profileError = '';
 
-  ngOnInit(){ this.restoreSession(); }
+  ngOnInit(){
+    this.authSessionState.invalidated$
+      .pipe(takeUntilDestroyed())
+      .subscribe(()=>this.handleSessionExpired());
+    this.restoreSession();
+  }
 
   /* ======================= Sesión ======================= */
   get isAdmin(){ return !!this.session?.roles.some(r=>r.name.toLowerCase()===ADMIN_ROLE); }
@@ -89,10 +97,29 @@ export class AppComponent implements OnInit {
     if(!localStorage.getItem(TOKEN_KEY)) return;
     this.api.me().subscribe({
       next:r=>{ this.session=r; if(this.page==='home') this.nav('dashboard'); },
-      error:e=>{ if((e as HttpErrorResponse).status===401) localStorage.removeItem(TOKEN_KEY); }
+      error:e=>{ if((e as HttpErrorResponse).status!==401) this.showToast(this.api.errorMessage(e)); }
     });
   }
-  refreshSession(){ this.api.me().subscribe({ next:r=>{ this.session=r; }, error:()=>{} }); }
+  refreshSession(){
+    this.api.me().subscribe({
+      next:r=>{ this.session=r; },
+      error:e=>{ if((e as HttpErrorResponse).status!==401) this.showToast(this.api.errorMessage(e)); }
+    });
+  }
+  private handleSessionExpired(){
+    const hadLocalSession=!!this.session || !!localStorage.getItem(TOKEN_KEY) || this.page!=='login';
+    localStorage.removeItem(TOKEN_KEY);
+    this.session=null;
+    this.apiUsers=[]; this.apiRoles=[]; this.apiPermissions=[]; this.allUserRoles=[]; this.allRolePerms=[];
+    this.loginPassword='';
+    this.profileForm.password='';
+    this.userForm.password='';
+    this.userModal=false; this.roleModal=false;
+    this.detailUser=null; this.userDetail=null;
+    this.page='login';
+    this.mobileMenu=false;
+    if(hadLocalSession) this.showToast('Tu sesión expiró. Inicia sesión nuevamente.');
+  }
   startSession(r:AuthResponse, message:string){
     localStorage.setItem(TOKEN_KEY, r.token);
     this.session=r; this.loginPassword='';
@@ -110,7 +137,9 @@ export class AppComponent implements OnInit {
     });
   }
   logout(){
-    if(this.session) this.api.logout().subscribe({ error:()=>{} });
+    if(this.session) this.api.logout().subscribe({
+      error:()=>this.showToast('La sesión se cerró localmente, pero no se pudo confirmar el cierre en el servidor.')
+    });
     localStorage.removeItem(TOKEN_KEY);
     this.session=null; this.apiUsers=[]; this.apiRoles=[]; this.apiPermissions=[]; this.allUserRoles=[]; this.allRolePerms=[];
     this.nav('home'); this.showToast('Sesión cerrada.');

@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, throwError } from 'rxjs';
 import { API_URL, TOKEN_KEY } from './api.config';
+import { AuthSessionState } from './auth-session-state.service';
+import { shouldInvalidateSession, userFacingHttpError } from './http-error-policy';
 
 /* ---------- Modelos (espejo de los DTO del backend) ---------- */
 export interface UserDto { id: number; name: string; email: string; }
@@ -22,11 +24,17 @@ export interface ApiError { errorCase?: string; message?: string; errors?: Recor
 
 /* ---------- Interceptor: adjunta el token de sesión ---------- */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const sessionState = inject(AuthSessionState);
   const token = localStorage.getItem(TOKEN_KEY);
   if (token && req.url.startsWith(API_URL)) {
     req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
   }
-  return next(req);
+  return next(req).pipe(catchError((error: unknown) => {
+    if (error instanceof HttpErrorResponse && shouldInvalidateSession(error.status, req.url)) {
+      sessionState.invalidate();
+    }
+    return throwError(() => error);
+  }));
 };
 
 @Injectable({ providedIn: 'root' })
@@ -110,13 +118,7 @@ export class ApiService {
   /* Mensaje legible a partir de un error HTTP */
   errorMessage(e: unknown): string {
     const err = e as HttpErrorResponse;
-    if (err?.status === 0) {
-      return 'No se pudo conectar con el servidor. Verifica que el backend esté corriendo en ' + API_URL.replace('/api', '') + '.';
-    }
     const body = (err?.error ?? {}) as ApiError;
-    if (body.errors && Object.keys(body.errors).length) {
-      return Object.values(body.errors).join(' · ');
-    }
-    return body.message || `Error inesperado (${err?.status ?? '?'}).`;
+    return userFacingHttpError(err?.status ?? 0, err?.url ?? '', body);
   }
 }
