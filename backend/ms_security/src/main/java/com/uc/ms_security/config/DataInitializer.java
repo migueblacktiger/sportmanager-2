@@ -55,7 +55,13 @@ public class DataInitializer implements ApplicationRunner {
         crud(catalog, "Role", "/api/roles");
         crud(catalog, "Permission", "/api/permissions");
 
+        catalog.add(new String[]{"User", "/api/users/{id}/detail", "GET"});
+        catalog.add(new String[]{"User", "/api/users/{id}/detail-with-sessions", "GET"});
+        catalog.add(new String[]{"User", "/api/users/{id}/detail-with-roles", "GET"});
+
         catalog.add(new String[]{"UserRole", "/api/user-roles", "GET"});
+        catalog.add(new String[]{"UserRole", "/api/user-roles/users/{userId}", "GET"});
+        catalog.add(new String[]{"UserRole", "/api/user-roles/roles/{roleId}", "GET"});
         catalog.add(new String[]{"UserRole", "/api/user-roles", "POST"});
         catalog.add(new String[]{"UserRole", "/api/user-roles/{userId}/{roleId}", "DELETE"});
 

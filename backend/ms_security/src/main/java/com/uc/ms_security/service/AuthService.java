@@ -123,7 +123,7 @@ public class AuthService {
         return buildResponse(user, saved.getToken(), saved.getExpiration());
     }
 
-    private Session findValidSession(String token) {
+    public Session findValidSession(String token) {
         if (token == null || token.isBlank()) {
             throw new ApplicationException(
                     ErrorCase.UNAUTHORIZED,
@@ -137,7 +137,7 @@ public class AuthService {
                         "Sesión no válida"
                 ));
 
-        if (session.getExpiration().isBefore(LocalDateTime.now())) {
+        if (!session.getExpiration().isAfter(LocalDateTime.now())) {
             throw new ApplicationException(
                     ErrorCase.UNAUTHORIZED,
                     "La sesión expiró, inicia sesión de nuevo"
