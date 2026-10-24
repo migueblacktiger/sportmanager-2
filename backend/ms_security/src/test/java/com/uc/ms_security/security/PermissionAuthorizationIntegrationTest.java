@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,12 +21,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.uc.ms_security.entity.Permission;
+import com.uc.ms_security.entity.Profile;
 import com.uc.ms_security.entity.Role;
 import com.uc.ms_security.entity.RolePermission;
 import com.uc.ms_security.entity.Session;
 import com.uc.ms_security.entity.User;
 import com.uc.ms_security.entity.UserRole;
 import com.uc.ms_security.repository.PermissionRepository;
+import com.uc.ms_security.repository.ProfileRepository;
 import com.uc.ms_security.repository.RolePermissionRepository;
 import com.uc.ms_security.repository.RoleRepository;
 import com.uc.ms_security.repository.SessionRepository;
@@ -55,6 +58,9 @@ class PermissionAuthorizationIntegrationTest {
 
     @Autowired
     private RolePermissionRepository rolePermissionRepository;
+
+    @Autowired
+    private ProfileRepository profileRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -161,14 +167,26 @@ class PermissionAuthorizationIntegrationTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.roles[0].name").value("Usuario"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"email":"%s","password":"test-password-8"}
                                 """.formatted(email)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty());
+
+        String secondEmail = UUID.randomUUID() + "@example.com";
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Second User","email":"%s","password":"test-password-8"}
+                                """.formatted(secondEmail)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.roles[0].name").value("Usuario"));
     }
 
     @Test
@@ -189,6 +207,140 @@ class PermissionAuthorizationIntegrationTest {
                         .header("Authorization", "Bearer " + fixture.token()))
                 .andExpect(status().isNoContent());
         authorizedGet("/api/auth/me", fixture.token())
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void ownSessionQueriesAreScopedAndDoNotRequireAdministrativePermissions() throws Exception {
+        Fixture owner = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Fixture otherUser = fixture(List.of(), LocalDateTime.now().plusHours(1));
+
+        authorizedGet("/api/users/" + owner.userId() + "/sessions", owner.token())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].token").doesNotExist())
+                .andExpect(jsonPath("$[0].code2FA").doesNotExist());
+        authorizedGet("/api/users/" + owner.userId() + "/sessions/" + owner.sessionId(), owner.token())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(jsonPath("$.code2FA").doesNotExist());
+
+        authorizedGet("/api/users/" + otherUser.userId() + "/sessions", owner.token())
+                .andExpect(status().isForbidden());
+        authorizedGet("/api/users/" + otherUser.userId() + "/sessions/" + otherUser.sessionId(), owner.token())
+                .andExpect(status().isForbidden());
+        authorizedGet("/api/users/" + owner.userId() + "/sessions/" + otherUser.sessionId(), owner.token())
+                .andExpect(status().isNotFound());
+        mockMvc.perform(delete("/api/users/" + otherUser.userId() + "/sessions/" + otherUser.sessionId())
+                        .header("Authorization", "Bearer " + owner.token()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/users/" + owner.userId() + "/sessions/" + otherUser.sessionId())
+                        .header("Authorization", "Bearer " + owner.token()))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(delete("/api/users/" + owner.userId() + "/sessions/" + owner.sessionId())
+                        .header("Authorization", "Bearer " + owner.token()))
+                .andExpect(status().isNoContent());
+        org.junit.jupiter.api.Assertions.assertTrue(
+                sessionRepository.findById(owner.sessionId()).isEmpty()
+        );
+    }
+
+    @Test
+    void administrativeSessionQueriesHideCredentialsAndCanRevokeSessions() throws Exception {
+        Role sessionAdministrator = createRole("Session administrator");
+        Fixture administrator = fixture(
+                List.of(sessionAdministrator),
+                LocalDateTime.now().plusHours(1)
+        );
+        Fixture target = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        assign(sessionAdministrator, findPermission("/api/users/{userId}/sessions", "GET"));
+        assign(sessionAdministrator, findPermission("/api/users/{userId}/sessions/{sessionId}", "GET"));
+        assign(sessionAdministrator, findPermission("/api/users/{userId}/sessions/{sessionId}", "DELETE"));
+        assign(sessionAdministrator, findPermission("/api/users/{id}/detail-with-sessions", "GET"));
+
+        authorizedGet("/api/users/" + target.userId() + "/sessions", administrator.token())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(target.sessionId()))
+                .andExpect(jsonPath("$[0].active").value(true))
+                .andExpect(jsonPath("$[0].token").doesNotExist())
+                .andExpect(jsonPath("$[0].code2FA").doesNotExist());
+        authorizedGet(
+                "/api/users/" + target.userId() + "/sessions/" + target.sessionId(),
+                administrator.token()
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(jsonPath("$.code2FA").doesNotExist());
+        authorizedGet("/api/users/" + target.userId() + "/detail-with-sessions", administrator.token())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessions[0].token").doesNotExist())
+                .andExpect(jsonPath("$.sessions[0].code2FA").doesNotExist());
+
+        mockMvc.perform(delete("/api/users/" + target.userId() + "/sessions/" + target.sessionId())
+                        .header("Authorization", "Bearer " + administrator.token()))
+                .andExpect(status().isNoContent());
+        org.junit.jupiter.api.Assertions.assertTrue(
+                sessionRepository.findById(target.sessionId()).isEmpty()
+        );
+    }
+
+    @Test
+    void administrativeSessionCreationAndTokenReplacementAreDisabled() throws Exception {
+        Role sessionAdministrator = createRole("Session administrator");
+        Fixture fixture = fixture(List.of(sessionAdministrator), LocalDateTime.now().plusHours(1));
+        assign(
+                sessionAdministrator,
+                createPermission("/api/users/{userId}/sessions", "POST")
+        );
+        assign(
+                sessionAdministrator,
+                createPermission("/api/users/{userId}/sessions/{sessionId}", "PUT")
+        );
+        String arbitraryToken = "attacker-chosen-token-" + UUID.randomUUID();
+        long initialSessionCount = sessionRepository.count();
+
+        mockMvc.perform(post("/api/users/" + fixture.userId() + "/sessions")
+                        .header("Authorization", "Bearer " + fixture.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"token":"%s","expiration":"%s","code2FA":"123456"}
+                                """.formatted(
+                                arbitraryToken,
+                                LocalDateTime.now().plusHours(2)
+                        )))
+                .andExpect(status().isMethodNotAllowed());
+        org.junit.jupiter.api.Assertions.assertEquals(initialSessionCount, sessionRepository.count());
+        org.junit.jupiter.api.Assertions.assertTrue(sessionRepository.findByToken(arbitraryToken).isEmpty());
+
+        mockMvc.perform(put("/api/users/" + fixture.userId() + "/sessions/" + fixture.sessionId())
+                        .header("Authorization", "Bearer " + fixture.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"token":"%s","expiration":"%s","code2FA":"123456"}
+                                """.formatted(
+                                arbitraryToken,
+                                LocalDateTime.now().plusHours(2)
+                        )))
+                .andExpect(status().isMethodNotAllowed());
+        org.junit.jupiter.api.Assertions.assertTrue(
+                sessionRepository.findByToken(fixture.token()).isPresent()
+        );
+        org.junit.jupiter.api.Assertions.assertTrue(sessionRepository.findByToken(arbitraryToken).isEmpty());
+    }
+
+    @Test
+    void sessionAdministrationRejectsMissingOrInsufficientAuthorization() throws Exception {
+        Fixture owner = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Fixture otherUser = fixture(List.of(), LocalDateTime.now().plusHours(1));
+
+        mockMvc.perform(get("/api/users/" + owner.userId() + "/sessions"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/users/" + otherUser.userId() + "/sessions")
+                        .header("Authorization", "Bearer " + owner.token()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/users/" + owner.userId() + "/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"token\":\"arbitrary\"}"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -249,9 +401,143 @@ class PermissionAuthorizationIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void personalProfileRoutesUseAuthenticatedUserAndIgnoreClientIdentity() throws Exception {
+        Fixture owner = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Fixture otherUser = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Profile ownerProfile = createProfile(owner.userId(), "1111111111");
+        Profile otherProfile = createProfile(otherUser.userId(), "2222222222");
+
+        authorizedGet("/api/users/me/detail", owner.token())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(owner.userId()))
+                .andExpect(jsonPath("$.profile.id").value(ownerProfile.getId()));
+
+        mockMvc.perform(put("/api/users/me/profile")
+                        .header("Authorization", "Bearer " + owner.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phone":"3333333333",
+                                  "birthDate":"1990-05-12",
+                                  "userId":%d
+                                }
+                                """.formatted(otherUser.userId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(owner.userId()))
+                .andExpect(jsonPath("$.phone").value("3333333333"));
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "3333333333",
+                profileRepository.findById(ownerProfile.getId()).orElseThrow().getPhone()
+        );
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "2222222222",
+                profileRepository.findById(otherProfile.getId()).orElseThrow().getPhone()
+        );
+
+        authorizedGet("/api/users/" + otherUser.userId() + "/detail", owner.token())
+                .andExpect(status().isForbidden());
+        authorizedGet("/api/profiles/" + otherProfile.getId(), owner.token())
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/profiles/" + otherProfile.getId())
+                        .header("Authorization", "Bearer " + owner.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"phone":"9999999999","birthDate":"1990-05-12"}
+                                """))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/users/" + otherUser.userId())
+                        .header("Authorization", "Bearer " + owner.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Changed User","email":"changed@example.com"}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void personalProfileCanBeCreatedWithoutAcceptingAUserId() throws Exception {
+        Fixture owner = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Fixture otherUser = fixture(List.of(), LocalDateTime.now().plusHours(1));
+
+        mockMvc.perform(put("/api/users/me/profile")
+                        .header("Authorization", "Bearer " + owner.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "phone":"4444444444",
+                                  "birthDate":"1991-06-13",
+                                  "userId":%d
+                                }
+                                """.formatted(otherUser.userId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(owner.userId()));
+
+        org.junit.jupiter.api.Assertions.assertTrue(profileRepository.existsByUserId(owner.userId()));
+        org.junit.jupiter.api.Assertions.assertFalse(profileRepository.existsByUserId(otherUser.userId()));
+    }
+
+    @Test
+    void personalRoutesRequireAValidSession() throws Exception {
+        mockMvc.perform(get("/api/users/me/detail"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(put("/api/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name":"Own User","email":"own@example.com"}
+                                """))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(put("/api/users/me/profile")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"phone":"5555555555","birthDate":"1990-05-12"}
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void administrativeProfileOperationsStillRequireAndHonorEffectivePermissions() throws Exception {
+        Role profileAdministrator = createRole("Profile administrator");
+        Fixture administrator = fixture(List.of(profileAdministrator), LocalDateTime.now().plusHours(1));
+        Fixture target = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Profile targetProfile = createProfile(target.userId(), "6666666666");
+        assign(profileAdministrator, findPermission("/api/users/{id}/detail", "GET"));
+        assign(profileAdministrator, findPermission("/api/profiles/{id}", "PUT"));
+
+        authorizedGet("/api/users/" + target.userId() + "/detail", administrator.token())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(target.userId()));
+        mockMvc.perform(put("/api/profiles/" + targetProfile.getId())
+                        .header("Authorization", "Bearer " + administrator.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"phone":"7777777777","birthDate":"1990-05-12"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(target.userId()))
+                .andExpect(jsonPath("$.phone").value("7777777777"));
+
+        org.junit.jupiter.api.Assertions.assertEquals(
+                "7777777777",
+                profileRepository.findById(targetProfile.getId()).orElseThrow().getPhone()
+        );
+    }
+
     private org.springframework.test.web.servlet.ResultActions authorizedGet(String path, String token)
             throws Exception {
         return mockMvc.perform(get(path).header("Authorization", "Bearer " + token));
+    }
+
+    private Profile createProfile(Long userId, String phone) {
+        User user = userRepository.findById(userId).orElseThrow();
+        Profile profile = new Profile();
+        profile.setUser(user);
+        profile.setPhone(phone);
+        profile.setBirthDate(java.time.LocalDate.of(1990, 5, 12));
+        Profile savedProfile = profileRepository.saveAndFlush(profile);
+        user.setProfile(savedProfile);
+        return savedProfile;
     }
 
     private Fixture fixture(List<Role> roles, LocalDateTime expiration) {
@@ -272,9 +558,10 @@ class PermissionAuthorizationIntegrationTest {
         Session session = new Session();
         session.setToken(token);
         session.setExpiration(expiration);
+        session.setCode2FA("654321");
         session.setUser(user);
-        sessionRepository.saveAndFlush(session);
-        return new Fixture(token);
+        Session savedSession = sessionRepository.saveAndFlush(session);
+        return new Fixture(token, user.getId(), savedSession.getId());
     }
 
     private Role createRole(String label) {
@@ -292,6 +579,14 @@ class PermissionAuthorizationIntegrationTest {
                 .orElseThrow();
     }
 
+    private Permission createPermission(String url, String method) {
+        Permission permission = new Permission();
+        permission.setModel("Session");
+        permission.setUrl(url);
+        permission.setMethod(method);
+        return permissionRepository.saveAndFlush(permission);
+    }
+
     private RolePermission assign(Role role, Permission permission) {
         return rolePermissionRepository.saveAndFlush(assignment(role, permission));
     }
@@ -303,6 +598,6 @@ class PermissionAuthorizationIntegrationTest {
         return rolePermission;
     }
 
-    private record Fixture(String token) {
+    private record Fixture(String token, Long userId, Long sessionId) {
     }
 }

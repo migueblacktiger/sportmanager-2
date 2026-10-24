@@ -1,6 +1,7 @@
 package com.uc.ms_security.security;
 
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,8 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
 
     private static final String API_PREFIX = "/api/";
     private static final Pattern PATH_VARIABLE = Pattern.compile("\\{[^{}]+\\}");
+    private static final Pattern USER_SESSIONS_PATH =
+            Pattern.compile("^/api/users/(\\d+)/sessions(?:/(\\d+))?$");
 
     private final AuthService authService;
     private final PermissionRepository permissionRepository;
@@ -59,7 +62,19 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
         }
 
         Session session = authService.findValidSession(bearerToken(request));
+        Long authenticatedUserId = session.getUser().getId();
+        request.setAttribute(RequestUserContext.USER_ID_ATTRIBUTE, authenticatedUserId);
         if (isSessionEndpoint(path, method)) {
+            return true;
+        }
+        if (isDisabledSessionMutation(path, method)) {
+            throw new ResponseStatusException(
+                    HttpStatus.METHOD_NOT_ALLOWED,
+                    "La creación y modificación administrativa de sesiones no está permitida"
+            );
+        }
+        if (isOwnSessionOperation(path, method, authenticatedUserId)
+                || isOwnUserOperation(path, method)) {
             return true;
         }
 
@@ -107,6 +122,30 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
     private static boolean isSessionEndpoint(String path, String method) {
         return ("/api/auth/me".equals(path) && "GET".equalsIgnoreCase(method))
                 || ("/api/auth/logout".equals(path) && "POST".equalsIgnoreCase(method));
+    }
+
+    private static boolean isOwnSessionOperation(String path, String method, Long authenticatedUserId) {
+        if (!"GET".equalsIgnoreCase(method) && !"DELETE".equalsIgnoreCase(method)) {
+            return false;
+        }
+        Matcher matcher = USER_SESSIONS_PATH.matcher(path);
+        return matcher.matches()
+                && Long.toString(authenticatedUserId).equals(matcher.group(1));
+    }
+
+    private static boolean isOwnUserOperation(String path, String method) {
+        return ("GET".equalsIgnoreCase(method) && "/api/users/me/detail".equals(path))
+                || ("PUT".equalsIgnoreCase(method) && "/api/users/me".equals(path))
+                || ("PUT".equalsIgnoreCase(method) && "/api/users/me/profile".equals(path));
+    }
+
+    private static boolean isDisabledSessionMutation(String path, String method) {
+        Matcher matcher = USER_SESSIONS_PATH.matcher(path);
+        if (!matcher.matches()) {
+            return false;
+        }
+        return ("POST".equalsIgnoreCase(method) && matcher.group(2) == null)
+                || ("PUT".equalsIgnoreCase(method) && matcher.group(2) != null);
     }
 
     private static String bearerToken(HttpServletRequest request) {

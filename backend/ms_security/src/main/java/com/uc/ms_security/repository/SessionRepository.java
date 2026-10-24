@@ -17,13 +17,6 @@ public interface SessionRepository
             Long userId
     );
 
-    boolean existsByToken(String token);
-
     @EntityGraph(attributePaths = "user")
     Optional<Session> findByToken(String token);
-
-    boolean existsByTokenAndIdNot(
-            String token,
-            Long id
-    );
 }

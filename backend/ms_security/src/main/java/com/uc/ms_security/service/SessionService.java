@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.uc.ms_security.dto.session.SessionRequestDTO;
 import com.uc.ms_security.dto.session.SessionResponseDTO;
 import com.uc.ms_security.entity.Session;
 import com.uc.ms_security.entity.User;
@@ -26,21 +25,6 @@ public class SessionService {
     private final UserRepository userRepository;
     private final SessionMapper sessionMapper;
 
-    public SessionResponseDTO create(Long userId, SessionRequestDTO dto) {
-        User user = findUser(userId);
-        if (sessionRepository.existsByToken(dto.getToken())) {
-            throw new ApplicationException(
-                    ErrorCase.ALREADY_EXISTS,
-                    "El token ya está registrado"
-            );
-        }
-
-        Session session = sessionMapper.toEntity(dto);
-        session.setUser(user);
-        Session savedSession = sessionRepository.save(session);
-        return sessionMapper.toResponseDTO(savedSession);
-    }
-
     public List<SessionResponseDTO> findAllByUserId(Long userId) {
         findUser(userId);
         return sessionMapper.toResponseDTOList(
@@ -50,24 +34,6 @@ public class SessionService {
 
     public SessionResponseDTO findById(Long userId, Long sessionId) {
         return sessionMapper.toResponseDTO(findSession(userId, sessionId));
-    }
-
-    public SessionResponseDTO update(
-            Long userId,
-            Long sessionId,
-            SessionRequestDTO dto) {
-
-        Session session = findSession(userId, sessionId);
-        if (sessionRepository.existsByTokenAndIdNot(dto.getToken(), sessionId)) {
-            throw new ApplicationException(
-                    ErrorCase.ALREADY_EXISTS,
-                    "El token ya está registrado"
-            );
-        }
-
-        sessionMapper.updateEntity(dto, session);
-        Session updatedSession = sessionRepository.save(session);
-        return sessionMapper.toResponseDTO(updatedSession);
     }
 
     public void delete(Long userId, Long sessionId) {

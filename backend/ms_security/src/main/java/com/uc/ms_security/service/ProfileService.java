@@ -61,6 +61,22 @@ public class ProfileService {
         return profileMapper.toResponseDTO(updatedProfile);
     }
 
+    public ProfileResponseDTO saveForUser(Long userId, UpdateProfileDTO dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApplicationException(
+                        ErrorCase.NOT_FOUND,
+                        "Usuario no encontrado"
+                ));
+        Profile profile = profileRepository.findByUserId(userId)
+                .orElseGet(() -> {
+                    Profile newProfile = new Profile();
+                    newProfile.setUser(user);
+                    return newProfile;
+                });
+        profileMapper.updateEntity(dto, profile);
+        return profileMapper.toResponseDTO(profileRepository.save(profile));
+    }
+
     public void delete(Long id) {
         Profile profile = findEntityById(id);
         profileRepository.delete(profile);

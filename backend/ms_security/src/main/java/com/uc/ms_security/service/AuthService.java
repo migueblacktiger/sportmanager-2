@@ -56,10 +56,7 @@ public class AuthService {
     private final RoleMapper roleMapper;
     private final PermissionMapper permissionMapper;
 
-    /**
-     * Crea la cuenta y abre sesión. El primer usuario registrado del sistema
-     * queda como Administrador (arranque inicial); los demás reciben el rol base.
-     */
+    /** Crea una cuenta pública con el rol Usuario y abre una sesión. */
     public AuthResponseDTO register(RegisterRequestDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new ApplicationException(
@@ -74,8 +71,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         User savedUser = userRepository.save(user);
 
-        boolean firstUser = userRepository.count() == 1;
-        Role role = findBaseRole(firstUser ? ADMIN_ROLE : DEFAULT_ROLE);
+        Role role = findBaseRole(DEFAULT_ROLE);
 
         UserRole userRole = new UserRole();
         userRole.setUser(savedUser);

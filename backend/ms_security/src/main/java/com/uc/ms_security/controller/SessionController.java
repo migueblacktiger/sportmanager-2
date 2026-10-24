@@ -8,16 +8,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
-import com.uc.ms_security.dto.session.SessionRequestDTO;
 import com.uc.ms_security.dto.session.SessionResponseDTO;
 import com.uc.ms_security.service.SessionService;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -28,12 +26,11 @@ public class SessionController {
     private final SessionService sessionService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public SessionResponseDTO create(
-            @PathVariable Long userId,
-            @Valid @RequestBody SessionRequestDTO dto) {
-
-        return sessionService.create(userId, dto);
+    public void create() {
+        throw new ResponseStatusException(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                "La creación de sesiones solo está disponible mediante autenticación"
+        );
     }
 
     @GetMapping
@@ -52,15 +49,10 @@ public class SessionController {
     }
 
     @PutMapping("/{sessionId}")
-    public SessionResponseDTO update(
-            @PathVariable Long userId,
-            @PathVariable Long sessionId,
-            @Valid @RequestBody SessionRequestDTO dto) {
-
-        return sessionService.update(
-                userId,
-                sessionId,
-                dto
+    public void update() {
+        throw new ResponseStatusException(
+                HttpStatus.METHOD_NOT_ALLOWED,
+                "No se permite modificar sesiones ni reemplazar sus tokens"
         );
     }
 

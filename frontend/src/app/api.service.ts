@@ -45,6 +45,10 @@ export class ApiService {
 
   /* Usuarios */
   getUsers(): Observable<UserDto[]> { return this.http.get<UserDto[]>(`${API_URL}/users`); }
+  getMyUserDetail(): Observable<UserDetailDto> { return this.http.get<UserDetailDto>(`${API_URL}/users/me/detail`); }
+  updateMyUser(body: { name: string; email: string; password?: string }): Observable<UserDto> {
+    return this.http.put<UserDto>(`${API_URL}/users/me`, body);
+  }
   getUserDetail(id: number): Observable<UserDetailDto> { return this.http.get<UserDetailDto>(`${API_URL}/users/${id}/detail`); }
   createUser(body: { name: string; email: string; password: string }): Observable<UserDto> {
     return this.http.post<UserDto>(`${API_URL}/users`, body);
@@ -60,6 +64,9 @@ export class ApiService {
   }
   updateProfile(id: number, body: { phone: string; birthDate: string }): Observable<ProfileDto> {
     return this.http.put<ProfileDto>(`${API_URL}/profiles/${id}`, body);
+  }
+  saveMyProfile(body: { phone: string; birthDate: string }): Observable<ProfileDto> {
+    return this.http.put<ProfileDto>(`${API_URL}/users/me/profile`, body);
   }
 
   /* Roles */

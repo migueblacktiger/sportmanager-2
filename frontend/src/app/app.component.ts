@@ -282,7 +282,7 @@ export class AppComponent implements OnInit {
     const user=this.session.user;
     this.profileForm={name:user.name,email:user.email,password:'',phone:'',birthDate:'',profileId:null};
     this.profileError='';
-    this.api.getUserDetail(user.id).subscribe({
+    this.api.getMyUserDetail().subscribe({
       next:d=>{ this.profileForm.phone=d.profile?.phone ?? ''; this.profileForm.birthDate=d.profile?.birthDate ?? ''; this.profileForm.profileId=d.profile?.id ?? null; },
       error:e=>{ this.profileError=this.api.errorMessage(e); }
     });
@@ -298,14 +298,13 @@ export class AppComponent implements OnInit {
     if(hasPhone && (f.phone.trim().length<7||f.phone.trim().length>20)){this.profileError='El teléfono debe tener entre 7 y 20 caracteres.';return;}
     this.saving=true;
     try{
-      const userId=this.session.user.id;
       const body:{name:string;email:string;password?:string}={name:f.name.trim(),email:f.email.trim()};
       if(f.password) body.password=f.password;
-      const updated=await firstValueFrom(this.api.updateUser(userId,body));
+      const updated=await firstValueFrom(this.api.updateMyUser(body));
       this.session={...this.session,user:updated};
       if(hasPhone){
-        if(f.profileId!==null) await firstValueFrom(this.api.updateProfile(f.profileId,{phone:f.phone.trim(),birthDate:f.birthDate}));
-        else { const p=await firstValueFrom(this.api.createProfile({userId,phone:f.phone.trim(),birthDate:f.birthDate})); f.profileId=p.id; }
+        const profile=await firstValueFrom(this.api.saveMyProfile({phone:f.phone.trim(),birthDate:f.birthDate}));
+        f.profileId=profile.id;
       }
       f.password='';
       this.showToast('Perfil actualizado correctamente.');

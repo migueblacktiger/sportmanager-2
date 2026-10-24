@@ -1,38 +1,20 @@
 package com.uc.ms_security.mapper;
 
-import com.uc.ms_security.dto.session.SessionRequestDTO;
 import com.uc.ms_security.dto.session.SessionResponseDTO;
 import com.uc.ms_security.entity.Session;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
 public class SessionMapper {
 
-    public Session toEntity(SessionRequestDTO dto) {
-        Session session = new Session();
-        session.setToken(dto.getToken());
-        session.setExpiration(dto.getExpiration());
-        session.setCode2FA(dto.getCode2FA());
-        return session;
-    }
-
-    public void updateEntity(
-            SessionRequestDTO dto,
-            Session session) {
-
-        session.setToken(dto.getToken());
-        session.setExpiration(dto.getExpiration());
-        session.setCode2FA(dto.getCode2FA());
-    }
-
     public SessionResponseDTO toResponseDTO(Session session) {
         return new SessionResponseDTO(
                 session.getId(),
-                session.getToken(),
                 session.getExpiration(),
-                session.getCode2FA()
+                session.getExpiration().isAfter(LocalDateTime.now())
         );
     }
 
