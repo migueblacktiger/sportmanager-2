@@ -1,0 +1,139 @@
+<section class="admin-page">
+  <div class="admin-subnav">
+    <button (click)="navigationRequested.emit('users')">♙ Usuarios</button>
+    <button (click)="navigationRequested.emit('roles')">♧ Roles</button>
+    <button class="selected">⚿ Permisos</button>
+    <button (click)="navigationRequested.emit('role-permissions')">▦ Asignar permisos</button>
+  </div>
+
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">CENTRO DE CONTROL · SEGURIDAD</span>
+      <h1>Catálogo de permisos</h1>
+      <p>Administra los permisos disponibles para los módulos del sistema.</p>
+    </div>
+    <button class="btn btn-primary" (click)="openNewPermission()">＋ Nuevo permiso</button>
+  </div>
+
+  <div class="stats-grid compact-stats">
+    <div class="stat-card">
+      <small>Permisos disponibles</small>
+      <b>{{permissions.length}}</b>
+      <em>En la plataforma</em>
+    </div>
+    <div class="stat-card">
+      <small>Asignados a algún rol</small>
+      <b>{{permissionsInUse}}</b>
+      <em>Estado actual</em>
+    </div>
+    <div class="stat-card">
+      <small>Sin asignar</small>
+      <b>{{permissions.length-permissionsInUse}}</b>
+      <em>Requieren seguimiento</em>
+    </div>
+  </div>
+
+  <div class="panel list-panel">
+    <div class="toolbar permission-toolbar">
+      <div class="search-box">
+        <span>⌕</span>
+        <input [(ngModel)]="search" placeholder="Buscar">
+      </div>
+      <label class="permission-filter">
+        <span>Recurso</span>
+        <select [(ngModel)]="selectedModel" aria-label="Filtrar por recurso o modelo">
+          <option value="">Todos</option>
+          <option *ngFor="let model of models" [value]="model">{{model}}</option>
+        </select>
+      </label>
+      <label class="permission-filter">
+        <span>Método HTTP</span>
+        <select [(ngModel)]="selectedMethod" aria-label="Filtrar por método HTTP">
+          <option value="">Todos</option>
+          <option *ngFor="let method of httpMethods" [value]="method">{{method}}</option>
+        </select>
+      </label>
+      <button class="btn btn-outline clear-filters" [disabled]="!hasActiveFilters" (click)="clearFilters()">Limpiar filtros</button>
+      <span class="toolbar-count">{{filteredPermissions.length}} permisos</span>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Recurso</th><th>URL</th><th>Operación</th><th>Método</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let permission of filteredPermissions">
+          <td><b>{{modelLabel(permission.model)}}</b></td>
+          <td><code>{{permission.url}}</code></td>
+          <td>{{operationOf(permission)}}</td>
+          <td><code>{{permission.method}}</code></td>
+          <td>
+            <div class="action-buttons">
+              <button title="Ver detalle" aria-label="Ver detalle del permiso" (click)="openPermissionDetail(permission)">⌕</button>
+              <button title="Editar" (click)="openEditPermission(permission)">✎</button>
+              <button class="danger" title="Eliminar" (click)="deletePermission(permission)">♲</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="dataLoading">Cargando datos…</div>
+    <div class="empty-state" *ngIf="!dataLoading&&!filteredPermissions.length">
+      {{hasActiveFilters?'No hay permisos que coincidan con los criterios seleccionados.':'No hay registros que mostrar.'}}
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" *ngIf="selectedPermission as permission" (click)="closePermissionDetail()">
+  <section class="modal-card permission-detail-modal" role="dialog" aria-modal="true" aria-labelledby="permission-detail-title" (click)="$event.stopPropagation()">
+    <div class="modal-heading">
+      <div>
+        <span class="eyebrow">CENTRO DE CONTROL · SEGURIDAD</span>
+        <h2 id="permission-detail-title">Detalle del permiso</h2>
+      </div>
+      <button class="close-button" aria-label="Cerrar detalle" (click)="closePermissionDetail()">×</button>
+    </div>
+    <dl class="permission-detail-list">
+      <div><dt>Identificador</dt><dd>{{permission.id}}</dd></div>
+      <div><dt>Modelo o recurso</dt><dd>{{modelLabel(permission.model)}}</dd></div>
+      <div><dt>URL</dt><dd><code>{{permission.url}}</code></dd></div>
+      <div><dt>Método HTTP</dt><dd><code>{{permission.method}}</code></dd></div>
+      <div><dt>Operación</dt><dd>{{operationOf(permission)}}</dd></div>
+    </dl>
+    <div class="modal-actions">
+      <button class="btn btn-outline" (click)="closePermissionDetail()">Cerrar</button>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop" *ngIf="permModal" (click)="permModal=false">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <div class="modal-heading">
+      <div>
+        <span class="eyebrow">CENTRO DE CONTROL · SEGURIDAD</span>
+        <h2>{{permForm.id===null?'Nuevo permiso':'Editar permiso'}}</h2>
+      </div>
+      <button class="close-button" (click)="permModal=false">×</button>
+    </div>
+    <div class="inline-notice error" *ngIf="formError"><span>⚠</span>{{formError}}</div>
+    <div class="form-grid">
+      <div class="form-field full-field">
+        <label>URL <b>*</b></label>
+        <input [(ngModel)]="permForm.url" maxlength="255" placeholder="Ej. /api/teams/{id}">
+      </div>
+      <div class="form-field">
+        <label>Método HTTP <b>*</b></label>
+        <select [(ngModel)]="permForm.method">
+          <option *ngFor="let method of methods" [value]="method">{{method}}</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>Modelo <b>*</b></label>
+        <input [(ngModel)]="permForm.model" maxlength="50" placeholder="Ej. Team">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" (click)="permModal=false">Cancelar</button>
+      <button class="btn btn-primary" [disabled]="saving" (click)="savePermission()">▣ Guardar permiso</button>
+    </div>
+  </div>
+</div>

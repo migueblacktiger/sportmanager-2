@@ -25,6 +25,7 @@ import com.uc.ms_security.dto.auth.RegisterRequestDTO;
 import com.uc.ms_security.entity.Role;
 import com.uc.ms_security.entity.Session;
 import com.uc.ms_security.entity.User;
+import com.uc.ms_security.entity.UserRole;
 import com.uc.ms_security.exception.ApplicationException;
 import com.uc.ms_security.exception.ErrorCase;
 import com.uc.ms_security.mapper.PermissionMapper;
@@ -101,16 +102,16 @@ class AuthServiceTest {
     }
 
     @Test
-    void registerShouldStoreEncodedPasswordInsteadOfPlaintext() {
+    void registerShouldStoreBCryptPasswordAndAssignTheUserRole() {
         String rawPassword = "12345678";
         RegisterRequestDTO dto = new RegisterRequestDTO();
         dto.setName("Juan Pérez");
         dto.setEmail("juan@gmail.com");
         dto.setPassword(rawPassword);
 
-        Role adminRole = new Role();
-        adminRole.setId(1L);
-        adminRole.setName(AuthService.ADMIN_ROLE);
+        Role userRole = new Role();
+        userRole.setId(2L);
+        userRole.setName(AuthService.DEFAULT_ROLE);
 
         when(userRepository.existsByEmail(dto.getEmail())).thenReturn(false);
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
@@ -118,9 +119,8 @@ class AuthServiceTest {
             savedUser.setId(1L);
             return savedUser;
         });
-        when(userRepository.count()).thenReturn(1L);
-        when(roleRepository.findByNameIgnoreCase(AuthService.ADMIN_ROLE))
-                .thenReturn(Optional.of(adminRole));
+        when(roleRepository.findByNameIgnoreCase(AuthService.DEFAULT_ROLE))
+                .thenReturn(Optional.of(userRole));
         when(sessionRepository.save(any(Session.class))).thenAnswer(invocation -> {
             Session session = invocation.getArgument(0);
             session.setId(1L);
@@ -135,5 +135,9 @@ class AuthServiceTest {
         String storedPassword = userCaptor.getValue().getPassword();
         assertNotEquals(rawPassword, storedPassword);
         assertTrue(passwordEncoder.matches(rawPassword, storedPassword));
+
+        ArgumentCaptor<UserRole> userRoleCaptor = ArgumentCaptor.forClass(UserRole.class);
+        verify(userRoleRepository).save(userRoleCaptor.capture());
+        assertEquals(AuthService.DEFAULT_ROLE, userRoleCaptor.getValue().getRole().getName());
     }
 }

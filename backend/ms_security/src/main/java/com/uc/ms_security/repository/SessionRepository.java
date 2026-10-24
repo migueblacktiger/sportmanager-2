@@ -1,6 +1,7 @@
 package com.uc.ms_security.repository;
 
 import com.uc.ms_security.entity.Session;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,12 +17,6 @@ public interface SessionRepository
             Long userId
     );
 
-    boolean existsByToken(String token);
-
+    @EntityGraph(attributePaths = "user")
     Optional<Session> findByToken(String token);
-
-    boolean existsByTokenAndIdNot(
-            String token,
-            Long id
-    );
 }

@@ -56,10 +56,7 @@ public class AuthService {
     private final RoleMapper roleMapper;
     private final PermissionMapper permissionMapper;
 
-    /**
-     * Crea la cuenta y abre sesión. El primer usuario registrado del sistema
-     * queda como Administrador (arranque inicial); los demás reciben el rol base.
-     */
+    /** Crea una cuenta pública con el rol Usuario y abre una sesión. */
     public AuthResponseDTO register(RegisterRequestDTO dto) {
         if (userRepository.existsByEmail(dto.getEmail())) {
             throw new ApplicationException(
@@ -74,8 +71,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
         User savedUser = userRepository.save(user);
 
-        boolean firstUser = userRepository.count() == 1;
-        Role role = findBaseRole(firstUser ? ADMIN_ROLE : DEFAULT_ROLE);
+        Role role = findBaseRole(DEFAULT_ROLE);
 
         UserRole userRole = new UserRole();
         userRole.setUser(savedUser);
@@ -123,7 +119,7 @@ public class AuthService {
         return buildResponse(user, saved.getToken(), saved.getExpiration());
     }
 
-    private Session findValidSession(String token) {
+    public Session findValidSession(String token) {
         if (token == null || token.isBlank()) {
             throw new ApplicationException(
                     ErrorCase.UNAUTHORIZED,
@@ -137,7 +133,7 @@ public class AuthService {
                         "Sesión no válida"
                 ));
 
-        if (session.getExpiration().isBefore(LocalDateTime.now())) {
+        if (!session.getExpiration().isAfter(LocalDateTime.now())) {
             throw new ApplicationException(
                     ErrorCase.UNAUTHORIZED,
                     "La sesión expiró, inicia sesión de nuevo"

@@ -1,0 +1,145 @@
+.registration-card {
+  width: 100%;
+}
+
+.registration-card h2 {
+  margin: 0 0 0.5rem;
+  color: #eafcff;
+  font-size: clamp(2rem, 3vw, 2.4rem);
+}
+
+.registration-card .muted {
+  margin: 0 0 1.5rem;
+  color: rgba(216, 234, 255, 0.8);
+}
+
+.registration-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.registration-card label {
+  color: #dfeaff;
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+
+.registration-card input {
+  width: 100%;
+  background: rgba(13, 21, 34, 0.9);
+  border: 1px solid rgba(116, 181, 255, 0.35);
+  color: #edf9ff;
+  border-radius: 12px;
+  padding: 0.9rem 0.95rem;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.registration-card input:focus {
+  outline: none;
+  border-color: rgba(88, 206, 169, 0.9);
+  box-shadow: 0 0 0 3px rgba(88, 206, 169, 0.16);
+}
+
+.registration-card .password-control {
+  position: relative;
+}
+
+.registration-card .password-control input {
+  padding-right: 5.5rem;
+}
+
+.registration-card .password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.8rem;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #7fe5e8;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.registration-card .password-toggle:focus-visible {
+  outline: 2px solid #7fe5e8;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.registration-card .invalid-field {
+  border-color: rgba(255, 112, 112, 0.9);
+}
+
+.registration-card .field-hint,
+.registration-card .field-error {
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.registration-card .field-hint {
+  color: rgba(166, 224, 255, 0.86);
+}
+
+.registration-card .field-hint.password-valid {
+  color: #76e0b2;
+  font-weight: 700;
+}
+
+.registration-card .field-error {
+  color: #ffb4b4;
+  margin-top: -0.2rem;
+}
+
+.registration-card .terms {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
+  font-size: 0.96rem;
+}
+
+.registration-card .terms input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #4ad0a6;
+  margin: 0;
+}
+
+.registration-card .server-error {
+  background: rgba(151, 25, 62, 0.2);
+  border: 1px solid rgba(255, 134, 134, 0.5);
+  color: #ffd4d4;
+  border-radius: 12px;
+  padding: 0.8rem 0.9rem;
+  font-size: 0.9rem;
+}
+
+.registration-card .auth-foot {
+  margin: 1.25rem 0 0;
+  color: rgba(216, 234, 255, 0.8);
+  text-align: center;
+}
+
+.registration-card .text-button {
+  background: transparent;
+  border: 0;
+  color: #7fe5e8;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.registration-card .full {
+  margin-top: 0.25rem;
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .registration-card h2 {
+    font-size: 1.8rem;
+  }
+}

@@ -10,15 +10,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.uc.ms_security.dto.profile.ProfileResponseDTO;
+import com.uc.ms_security.dto.profile.UpdateProfileDTO;
 import com.uc.ms_security.dto.user.CreateUserDTO;
 import com.uc.ms_security.dto.user.UpdateUserDTO;
 import com.uc.ms_security.dto.user.UserDetailResponseDTO;
 import com.uc.ms_security.dto.user.UserResponseDTO;
 import com.uc.ms_security.dto.user.UserRolesResponseDTO;
 import com.uc.ms_security.dto.user.UserSessionsResponseDTO;
+import com.uc.ms_security.security.RequestUserContext;
+import com.uc.ms_security.service.ProfileService;
 import com.uc.ms_security.service.UserService;
 
 import jakarta.validation.Valid;
@@ -30,6 +35,27 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
+    private final ProfileService profileService;
+
+    @GetMapping("/me/detail")
+    public UserDetailResponseDTO findMyDetails(
+            @RequestAttribute(RequestUserContext.USER_ID_ATTRIBUTE) Long authenticatedUserId) {
+        return userService.findByIdWithProfile(authenticatedUserId);
+    }
+
+    @PutMapping("/me")
+    public UserResponseDTO updateMyAccount(
+            @RequestAttribute(RequestUserContext.USER_ID_ATTRIBUTE) Long authenticatedUserId,
+            @Valid @RequestBody UpdateUserDTO dto) {
+        return userService.update(authenticatedUserId, dto);
+    }
+
+    @PutMapping("/me/profile")
+    public ProfileResponseDTO saveMyProfile(
+            @RequestAttribute(RequestUserContext.USER_ID_ATTRIBUTE) Long authenticatedUserId,
+            @Valid @RequestBody UpdateProfileDTO dto) {
+        return profileService.saveForUser(authenticatedUserId, dto);
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

@@ -1,0 +1,82 @@
+:host {
+  display: block;
+}
+
+.permission-toolbar {
+  flex-wrap: wrap;
+}
+
+.permission-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.permission-filter select {
+  min-width: 145px;
+}
+
+.clear-filters {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+.permission-toolbar .toolbar-count {
+  white-space: nowrap;
+}
+
+.permission-detail-modal {
+  max-width: 560px;
+}
+
+.permission-detail-list {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.permission-detail-list > div {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.8fr) minmax(0, 1.2fr);
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.permission-detail-list dt {
+  color: var(--muted);
+}
+
+.permission-detail-list dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .permission-toolbar .search-box {
+    min-width: min(100%, 250px);
+  }
+
+  .permission-toolbar .toolbar-count {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .permission-toolbar > * {
+    width: 100%;
+  }
+
+  .permission-filter select,
+  .clear-filters {
+    width: 100%;
+  }
+
+  .permission-detail-list > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
