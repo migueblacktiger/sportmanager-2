@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.uc.ms_security.dto.auth.AuthResponseDTO;
+import com.uc.ms_security.dto.auth.FirebaseOAuthRequestDTO;
 import com.uc.ms_security.dto.auth.LoginRequestDTO;
 import com.uc.ms_security.dto.auth.RegisterRequestDTO;
 import com.uc.ms_security.service.AuthService;
+import com.uc.ms_security.service.GoogleOAuthLoginService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +27,7 @@ public class AuthController {
     private static final String BEARER = "Bearer ";
 
     private final AuthService authService;
+    private final GoogleOAuthLoginService googleOAuthLoginService;
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
@@ -35,6 +38,11 @@ public class AuthController {
     @PostMapping("/login")
     public AuthResponseDTO login(@Valid @RequestBody LoginRequestDTO dto) {
         return authService.login(dto);
+    }
+
+    @PostMapping("/oauth/firebase")
+    public AuthResponseDTO firebaseGoogleLogin(@Valid @RequestBody FirebaseOAuthRequestDTO dto) {
+        return googleOAuthLoginService.login(dto.getIdToken());
     }
 
     @GetMapping("/me")
@@ -51,7 +59,7 @@ public class AuthController {
     }
 
     private String extractToken(String authorization) {
-        if (authorization != null && authorization.startsWith(BEARER)) {
+        if (authorization != null && authorization.regionMatches(true, 0, BEARER, 0, BEARER.length())) {
             return authorization.substring(BEARER.length()).trim();
         }
         return null;

@@ -30,7 +30,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     req = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
   }
   return next(req).pipe(catchError((error: unknown) => {
-    if (error instanceof HttpErrorResponse && shouldInvalidateSession(error.status, req.url)) {
+    if (error instanceof HttpErrorResponse && token
+        && localStorage.getItem(TOKEN_KEY) === token
+        && req.url.startsWith(`${API_URL}/`)
+        && shouldInvalidateSession(error.status, req.url)) {
       sessionState.invalidate();
     }
     return throwError(() => error);
@@ -47,6 +50,9 @@ export class ApiService {
   }
   login(body: { email: string; password: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${API_URL}/auth/login`, body);
+  }
+  exchangeFirebaseGoogleToken(body: { idToken: string }): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${API_URL}/auth/oauth/firebase`, body);
   }
   me(): Observable<AuthResponse> { return this.http.get<AuthResponse>(`${API_URL}/auth/me`); }
   logout(): Observable<void> { return this.http.post<void>(`${API_URL}/auth/logout`, {}); }

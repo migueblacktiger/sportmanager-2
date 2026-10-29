@@ -116,7 +116,9 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
 
     private static boolean isPublicAuthenticationRequest(String path, String method) {
         return "POST".equalsIgnoreCase(method)
-                && ("/api/auth/register".equals(path) || "/api/auth/login".equals(path));
+                && ("/api/auth/register".equals(path)
+                    || "/api/auth/login".equals(path)
+                    || "/api/auth/oauth/firebase".equals(path));
     }
 
     private static boolean isSessionEndpoint(String path, String method) {

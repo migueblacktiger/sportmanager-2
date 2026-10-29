@@ -77,6 +77,7 @@ class AuthServiceTest {
                 rolePermissionRepository,
                 sessionRepository,
                 passwordEncoder,
+                new com.uc.ms_security.security.InternalJwtService(java.util.Base64.getEncoder().encodeToString(new byte[32]), "sportmanager", "sportmanager-api"),
                 userMapper,
                 roleMapper,
                 permissionMapper

@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -7,6 +7,7 @@ import { firstValueFrom, forkJoin } from 'rxjs';
 import { ApiService, AuthResponse, PermissionDto, RoleDto, RolePermissionDto, UserDetailDto, UserDto, UserRoleDto } from './api.service';
 import { TOKEN_KEY } from './api.config';
 import { AuthSessionState } from './auth-session-state.service';
+import { FirebaseAuthService } from './firebase-auth.service';
 import { PermissionManagementComponent } from './features/security/permission-management/permission-management.component';
 import { RegistrationComponent } from './features/security/registration/registration.component';
 import { RolePermissionAssignmentComponent } from './features/security/role-permission-assignment/role-permission-assignment.component';
@@ -20,6 +21,9 @@ const ADMIN_ROLE = 'administrador';
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
   private authSessionState = inject(AuthSessionState);
+  private firebaseAuth = inject(FirebaseAuthService);
+  private destroyRef = inject(DestroyRef);
+  get googleLoginEnabled(){ return this.firebaseAuth.enabled; }
   @ViewChild(RolePermissionAssignmentComponent)
   private rolePermissionAssignment?: RolePermissionAssignmentComponent;
 
@@ -75,7 +79,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(){
     this.authSessionState.invalidated$
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(()=>this.handleSessionExpired());
     this.restoreSession();
   }
@@ -107,7 +111,8 @@ export class AppComponent implements OnInit {
     });
   }
   private handleSessionExpired(){
-    const hadLocalSession=!!this.session || !!localStorage.getItem(TOKEN_KEY) || this.page!=='login';
+    const hadLocalSession=!!this.session || !!localStorage.getItem(TOKEN_KEY);
+    if (!hadLocalSession) return;
     localStorage.removeItem(TOKEN_KEY);
     this.session=null;
     this.apiUsers=[]; this.apiRoles=[]; this.apiPermissions=[]; this.allUserRoles=[]; this.allRolePerms=[];
@@ -129,12 +134,31 @@ export class AppComponent implements OnInit {
     this.startSession(response, 'Cuenta creada correctamente. ¡Bienvenido!');
   }
   login(){
+    if (this.authLoading) return;
     if(!this.loginEmail.trim()||!this.loginPassword){this.showToast('Ingresa tu correo y contraseña.');return;}
     this.authLoading=true;
     this.api.login({email:this.loginEmail.trim(),password:this.loginPassword}).subscribe({
       next:r=>{ this.authLoading=false; this.startSession(r,`Bienvenido, ${r.user.name}.`); },
       error:e=>{ this.authLoading=false; this.showToast(this.api.errorMessage(e)); }
     });
+  }
+  async googleLogin(){
+    if (!this.googleLoginEnabled || this.authLoading) return;
+    if (!this.firebaseAuth.enabled) {
+      this.showToast('El acceso con Google no está configurado.');
+      return;
+    }
+    this.authLoading=true;
+    try {
+      const identity = await this.firebaseAuth.obtainIdentityToken('google');
+      this.api.exchangeFirebaseGoogleToken({idToken:identity.idToken}).subscribe({
+        next:r=>{ this.authLoading=false; this.startSession(r,`Bienvenido, ${r.user.name}.`); },
+        error:e=>{ this.authLoading=false; this.showToast(this.api.errorMessage(e)); }
+      });
+    } catch (error: unknown) {
+      this.authLoading=false;
+      this.showToast(this.firebaseAuth.errorMessage(error));
+    }
   }
   logout(){
     if(this.session) this.api.logout().subscribe({

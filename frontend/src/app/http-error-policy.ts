@@ -7,6 +7,7 @@ export function shouldInvalidateSession(status: number, url: string): boolean {
   return status === 401
     && !isAuthEndpoint(url, '/auth/login')
     && !isAuthEndpoint(url, '/auth/register')
+    && !isAuthEndpoint(url, '/auth/oauth/firebase')
     && !isAuthEndpoint(url, '/auth/logout');
 }
 
@@ -24,6 +25,9 @@ export function userFacingHttpError(
     }
     if (isAuthEndpoint(url, '/auth/register')) {
       return 'No se pudo completar el registro. Inténtalo nuevamente.';
+    }
+    if (isAuthEndpoint(url, '/auth/oauth/firebase')) {
+      return body?.message?.trim() || 'SportManager no pudo validar la identidad de Google.';
     }
     return 'Tu sesión expiró o ya no es válida. Inicia sesión nuevamente.';
   }

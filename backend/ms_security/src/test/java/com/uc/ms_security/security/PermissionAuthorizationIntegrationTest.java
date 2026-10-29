@@ -49,6 +49,8 @@ class PermissionAuthorizationIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private InternalJwtService jwtService;
 
     @Autowired
     private PermissionRepository permissionRepository;
@@ -524,6 +526,33 @@ class PermissionAuthorizationIntegrationTest {
         );
     }
 
+    @Test
+    void rejectsDeletedSessionEvenWithValidSignature() throws Exception {
+        Fixture fixture = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        sessionRepository.deleteById(fixture.sessionId());
+        sessionRepository.flush();
+        authorizedGet("/api/auth/me", fixture.token()).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rejectsSessionReassignedToAnotherUser() throws Exception {
+        Fixture first = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Fixture second = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Session session = sessionRepository.findById(first.sessionId()).orElseThrow();
+        session.setUser(userRepository.findById(second.userId()).orElseThrow());
+        sessionRepository.saveAndFlush(session);
+        authorizedGet("/api/auth/me", first.token()).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void rejectsChangedDatabaseExpiration() throws Exception {
+        Fixture fixture = fixture(List.of(), LocalDateTime.now().plusHours(1));
+        Session session = sessionRepository.findById(fixture.sessionId()).orElseThrow();
+        session.setExpiration(LocalDateTime.now().minusMinutes(1));
+        sessionRepository.saveAndFlush(session);
+        authorizedGet("/api/auth/me", fixture.token()).andExpect(status().isUnauthorized());
+    }
+
     private org.springframework.test.web.servlet.ResultActions authorizedGet(String path, String token)
             throws Exception {
         return mockMvc.perform(get(path).header("Authorization", "Bearer " + token));
@@ -554,7 +583,8 @@ class PermissionAuthorizationIntegrationTest {
             userRoleRepository.save(userRole);
         }
 
-        String token = UUID.randomUUID().toString();
+        expiration = expiration.withNano(0);
+        String token = jwtService.issue(user.getId(), expiration.atZone(java.time.ZoneId.systemDefault()).toInstant());
         Session session = new Session();
         session.setToken(token);
         session.setExpiration(expiration);
