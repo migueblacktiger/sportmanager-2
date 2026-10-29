@@ -4,7 +4,9 @@ import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.time.ZoneId;
+import com.uc.ms_security.security.InternalJwtService;
+import io.jsonwebtoken.Claims;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ import com.uc.ms_security.dto.auth.RegisterRequestDTO;
 import com.uc.ms_security.dto.permission.PermissionResponseDTO;
 import com.uc.ms_security.dto.role.RoleResponseDTO;
 import com.uc.ms_security.entity.Role;
+import com.uc.ms_security.entity.AccountType;
 import com.uc.ms_security.entity.RolePermission;
 import com.uc.ms_security.entity.Session;
 import com.uc.ms_security.entity.User;
@@ -35,7 +38,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Registro y autenticación por credenciales (email + contraseña).
- * La sesión se guarda en la tabla sessions con un token opaco (UUID).
+ * La sesión se guarda en la tabla sessions con un JWT firmado.
  */
 @Service
 @RequiredArgsConstructor
@@ -52,9 +55,11 @@ public class AuthService {
     private final RolePermissionRepository rolePermissionRepository;
     private final SessionRepository sessionRepository;
     private final PasswordEncoder passwordEncoder;
+    private final InternalJwtService jwtService;
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
     private final PermissionMapper permissionMapper;
+    private final org.springframework.beans.factory.ObjectProvider<TwoFactorService> twoFactor;
 
     /** Crea una cuenta pública con el rol Usuario y abre una sesión. */
     public AuthResponseDTO register(RegisterRequestDTO dto) {
@@ -69,6 +74,7 @@ public class AuthService {
         user.setName(dto.getName());
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setAccountType(AccountType.LOCAL);
         User savedUser = userRepository.save(user);
 
         Role role = findBaseRole(DEFAULT_ROLE);
@@ -81,14 +87,18 @@ public class AuthService {
         return openSession(savedUser);
     }
 
-    public AuthResponseDTO login(LoginRequestDTO dto) {
-        User user = userRepository.findByEmail(dto.getEmail())
+    public com.uc.ms_security.dto.auth.LoginResultDTO login(LoginRequestDTO dto, String remoteAddress) {
+        Long userId = userRepository.findPasswordRecoveryUserIdByEmail(dto.getEmail())
+                .orElseThrow(this::invalidCredentials);
+        User user = userRepository.findForPasswordRecoveryById(userId)
                 .orElseThrow(this::invalidCredentials);
 
-        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+        if (!user.isEnabled() || user.getAccountType() != AccountType.LOCAL
+                || user.getPassword() == null || !passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
             throw invalidCredentials();
         }
 
+        if (user.isTwoFactorEnabled()) return twoFactor.getObject().beginLogin(user, remoteAddress);
         return openSession(user);
     }
 
@@ -106,13 +116,17 @@ public class AuthService {
         if (token == null || token.isBlank()) {
             return;
         }
-        sessionRepository.findByToken(token).ifPresent(sessionRepository::delete);
+        sessionRepository.delete(findValidSession(token));
     }
 
-    private AuthResponseDTO openSession(User user) {
+    AuthResponseDTO openSession(User user) {
+        if (!user.isEnabled()) {
+            throw new ApplicationException(ErrorCase.UNAUTHORIZED, "La cuenta no está habilitada");
+        }
         Session session = new Session();
-        session.setToken(UUID.randomUUID().toString());
-        session.setExpiration(LocalDateTime.now().plusHours(SESSION_HOURS));
+
+        session.setExpiration(LocalDateTime.now().plusHours(SESSION_HOURS).withNano(0));
+        session.setToken(jwtService.issue(user.getId(), session.getExpiration().atZone(ZoneId.systemDefault()).toInstant()));
         session.setUser(user);
         Session saved = sessionRepository.save(session);
 
@@ -138,6 +152,16 @@ public class AuthService {
                     ErrorCase.UNAUTHORIZED,
                     "La sesión expiró, inicia sesión de nuevo"
             );
+        }
+        // Existing opaque sessions remain valid until their persisted expiration.
+        // JWT sessions still require the original signature and claims validation.
+        if (!token.matches("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) {
+            Claims claims = jwtService.verify(token);
+            if (!session.getUser().getId().toString().equals(claims.getSubject())
+                    || !session.getExpiration().atZone(ZoneId.systemDefault()).toInstant()
+                            .equals(claims.getExpiration().toInstant())) {
+                throw new ApplicationException(ErrorCase.UNAUTHORIZED, "Sesión no válida");
+            }
         }
         return session;
     }

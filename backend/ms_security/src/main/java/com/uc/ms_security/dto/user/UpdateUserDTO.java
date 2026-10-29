@@ -7,6 +7,8 @@ import lombok.Setter;
 @Getter
 @Setter
 public class UpdateUserDTO extends BaseUserDTO {
+    @com.fasterxml.jackson.annotation.JsonProperty(access = com.fasterxml.jackson.annotation.JsonProperty.Access.WRITE_ONLY)
+    private String currentPassword;
 
     @Size(  min = 8,
             message = "La contraseña debe tener mínimo 8 caracteres"

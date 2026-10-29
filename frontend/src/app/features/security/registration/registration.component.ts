@@ -76,6 +76,7 @@ export class RegistrationComponent {
   }
 
   submitRegistration(): void {
+    if (this.isSubmitting) return;
     this.submitted = true;
     this.submitError = '';
 

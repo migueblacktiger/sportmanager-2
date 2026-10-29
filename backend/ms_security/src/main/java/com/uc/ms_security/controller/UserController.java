@@ -47,7 +47,7 @@ public class UserController {
     public UserResponseDTO updateMyAccount(
             @RequestAttribute(RequestUserContext.USER_ID_ATTRIBUTE) Long authenticatedUserId,
             @Valid @RequestBody UpdateUserDTO dto) {
-        return userService.update(authenticatedUserId, dto);
+        return userService.updateMyAccount(authenticatedUserId, dto);
     }
 
     @PutMapping("/me/profile")
@@ -95,8 +95,9 @@ public class UserController {
     @PutMapping("/{id}")
     public UserResponseDTO update(
             @PathVariable Long id,
+            @RequestAttribute(RequestUserContext.USER_ID_ATTRIBUTE) Long authenticatedUserId,
             @Valid @RequestBody UpdateUserDTO dto) {
-        return userService.update(id, dto);
+        return id.equals(authenticatedUserId) ? userService.updateMyAccount(id, dto) : userService.update(id, dto);
     }
 
     @DeleteMapping("/{id}")

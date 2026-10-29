@@ -1,25 +1,29 @@
-import { Component, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { firstValueFrom, forkJoin } from 'rxjs';
-import { ApiService, AuthResponse, PermissionDto, RoleDto, RolePermissionDto, UserDetailDto, UserDto, UserRoleDto } from './api.service';
+import { firstValueFrom, forkJoin, interval, Subscription } from 'rxjs';
+import { ApiService, AuthResponse, PermissionDto, RoleDto, RolePermissionDto, TwoFactorChallenge, TwoFactorSettings, UserDetailDto, UserDto, UserRoleDto } from './api.service';
 import { TOKEN_KEY } from './api.config';
 import { AuthSessionState } from './auth-session-state.service';
+import { ExternalAuthProvider, FirebaseAuthService } from './firebase-auth.service';
 import { PermissionManagementComponent } from './features/security/permission-management/permission-management.component';
 import { RegistrationComponent } from './features/security/registration/registration.component';
 import { RolePermissionAssignmentComponent } from './features/security/role-permission-assignment/role-permission-assignment.component';
 
-type Page = 'home'|'login'|'register'|'forgot'|'dashboard'|'sports'|'teams'|'players'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
+type Page = 'home'|'login'|'register'|'forgot'|'reset-password'|'verify-email'|'two-factor'|'security-settings'|'dashboard'|'sports'|'teams'|'players'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
 interface Sport { name:string; category:string; subs:string[]; status:'Activo'|'Inactivo'; description:string; teams:number; icon:string; }
-const PUBLIC_PAGES: Page[] = ['home','login','register','forgot'];
+const PUBLIC_PAGES: Page[] = ['home','login','register','forgot','reset-password','verify-email','two-factor'];
 const ADMIN_PAGES: Page[] = ['users','roles','permissions','role-permissions'];
 const ADMIN_ROLE = 'administrador';
 @Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
   private authSessionState = inject(AuthSessionState);
+  private firebaseAuth = inject(FirebaseAuthService);
+  private destroyRef = inject(DestroyRef);
+  get googleLoginEnabled(){ return this.firebaseAuth.enabled; }
   @ViewChild(RolePermissionAssignmentComponent)
   private rolePermissionAssignment?: RolePermissionAssignmentComponent;
 
@@ -46,6 +50,28 @@ export class AppComponent implements OnInit {
   session: AuthResponse | null = null;
   loginEmail=''; loginPassword='';
   authLoading = false;
+  verificationEmail = '';
+  verificationProvider: ExternalAuthProvider = 'google';
+  verificationMessage = '';
+  verificationError = '';
+  forgotEmail = '';
+  recoveryLoading = false;
+  recoveryMessage = '';
+  recoveryError = '';
+  newPassword = '';
+  confirmNewPassword = '';
+  resetComplete = false;
+  private resetToken = '';
+  twoFactorChallenge: TwoFactorChallenge | null = null;
+  twoFactorSettings: TwoFactorSettings | null = null;
+  twoFactorPassword = '';
+  twoFactorCode = '';
+  twoFactorBusy = false;
+  twoFactorError = '';
+  twoFactorMessage = '';
+  twoFactorRemaining = 0;
+  twoFactorResendRemaining = 0;
+  private twoFactorTimer?: Subscription;
 
   /* ---------- Datos de seguridad (vienen del backend) ---------- */
   apiUsers: UserDto[] = [];
@@ -70,14 +96,72 @@ export class AppComponent implements OnInit {
   roleModal = false;
   roleForm = { id: null as number|null, name:'', description:'' };
   /* ---------- Perfil propio ---------- */
-  profileForm = { name:'', email:'', password:'', phone:'', birthDate:'', profileId: null as number|null };
+  profileForm = { name:'', email:'', password:'', currentPassword:'', phone:'', birthDate:'', profileId: null as number|null };
   profileError = '';
 
   ngOnInit(){
+    this.openPasswordResetLink();
     this.authSessionState.invalidated$
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(()=>this.handleSessionExpired());
-    this.restoreSession();
+    // An old session must not interrupt a public recovery link with an expiry redirect.
+    if (this.page !== 'reset-password') this.restoreSession();
+  }
+
+  private openPasswordResetLink(){
+    const prefix = '#reset-password=';
+    if (!window.location.hash.startsWith(prefix)) return;
+    const token = window.location.hash.slice(prefix.length);
+    // Keep the recovery secret only in component memory, never in history or localStorage.
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    this.page = 'reset-password';
+    if (/^[A-Za-z0-9_-]{43}$/.test(token)) this.resetToken = token;
+    else this.recoveryError = 'El enlace no es válido. Solicita uno nuevo.';
+  }
+
+  async requestPasswordRecovery(){
+    if (this.recoveryLoading) return;
+    this.recoveryError = '';
+    this.recoveryMessage = '';
+    this.recoveryLoading = true;
+    try {
+      await firstValueFrom(this.api.forgotPassword(this.forgotEmail.trim()));
+      this.recoveryMessage = 'Si existe una cuenta que puede recuperar su contraseña, recibirás un correo con las instrucciones';
+    } catch (error: unknown) {
+      this.recoveryError = this.api.errorMessage(error);
+    } finally {
+      this.recoveryLoading = false;
+    }
+  }
+
+  async resetRecoveredPassword(){
+    if (this.recoveryLoading || this.resetComplete) return;
+    this.recoveryError = '';
+    if (!this.resetToken) {
+      this.recoveryError = 'El enlace no es válido. Solicita uno nuevo.';
+      return;
+    }
+    if (!this.newPassword.trim() || this.newPassword.length < 8) {
+      this.recoveryError = 'La contraseña debe tener mínimo 8 caracteres y no puede contener solo espacios.';
+      return;
+    }
+    if (this.newPassword !== this.confirmNewPassword) {
+      this.recoveryError = 'Las contraseñas no coinciden.';
+      return;
+    }
+    this.recoveryLoading = true;
+    try {
+      await firstValueFrom(this.api.resetPassword(this.resetToken, this.newPassword));
+      this.resetComplete = true;
+      this.resetToken = '';
+      this.recoveryMessage = 'Contraseña actualizada. Tus sesiones anteriores se cerraron. Inicia sesión con tu nueva contraseña.';
+    } catch (error: unknown) {
+      this.recoveryError = this.api.errorMessage(error);
+    } finally {
+      this.newPassword = '';
+      this.confirmNewPassword = '';
+      this.recoveryLoading = false;
+    }
   }
 
   /* ======================= Sesión ======================= */
@@ -107,12 +191,15 @@ export class AppComponent implements OnInit {
     });
   }
   private handleSessionExpired(){
-    const hadLocalSession=!!this.session || !!localStorage.getItem(TOKEN_KEY) || this.page!=='login';
+    const hadLocalSession=!!this.session || !!localStorage.getItem(TOKEN_KEY);
+    if (!hadLocalSession) return;
     localStorage.removeItem(TOKEN_KEY);
     this.session=null;
     this.apiUsers=[]; this.apiRoles=[]; this.apiPermissions=[]; this.allUserRoles=[]; this.allRolePerms=[];
     this.loginPassword='';
     this.profileForm.password='';
+    this.profileForm.currentPassword='';
+    this.clearTwoFactor();
     this.userForm.password='';
     this.userModal=false; this.roleModal=false;
     this.detailUser=null; this.userDetail=null;
@@ -129,32 +216,199 @@ export class AppComponent implements OnInit {
     this.startSession(response, 'Cuenta creada correctamente. ¡Bienvenido!');
   }
   login(){
+    if (this.authLoading) return;
     if(!this.loginEmail.trim()||!this.loginPassword){this.showToast('Ingresa tu correo y contraseña.');return;}
     this.authLoading=true;
     this.api.login({email:this.loginEmail.trim(),password:this.loginPassword}).subscribe({
-      next:r=>{ this.authLoading=false; this.startSession(r,`Bienvenido, ${r.user.name}.`); },
+      next:r=>{
+        this.authLoading=false;
+        if ('twoFactorRequired' in r) {
+          this.loginPassword=''; this.setTwoFactorChallenge(r); this.nav('two-factor');
+        } else this.startSession(r,`Bienvenido, ${r.user.name}.`);
+      },
       error:e=>{ this.authLoading=false; this.showToast(this.api.errorMessage(e)); }
     });
   }
+  googleLogin(){ return this.oauthLogin('google'); }
+  private setTwoFactorChallenge(challenge: TwoFactorChallenge){
+    this.twoFactorTimer?.unsubscribe();
+    this.twoFactorChallenge = challenge; this.twoFactorCode = ''; this.twoFactorError = '';
+    this.twoFactorMessage = 'Código enviado. Revisa tu correo y la carpeta de spam.';
+    const expires = Date.now() + challenge.expiresInSeconds * 1000;
+    const resend = Date.now() + challenge.resendAfterSeconds * 1000;
+    const tick = () => {
+      this.twoFactorRemaining = Math.max(0, Math.ceil((expires-Date.now())/1000));
+      this.twoFactorResendRemaining = Math.max(0, Math.ceil((resend-Date.now())/1000));
+    };
+    tick();
+    this.twoFactorTimer = interval(1000).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(tick);
+  }
+  get twoFactorTime(){ return `${Math.floor(this.twoFactorRemaining/60)}:${String(this.twoFactorRemaining%60).padStart(2,'0')}`; }
+  private clearTwoFactor(){
+    this.twoFactorTimer?.unsubscribe(); this.twoFactorChallenge=null; this.twoFactorCode='';
+    this.twoFactorPassword=''; this.twoFactorError=''; this.twoFactorMessage='';
+  }
+  async loadTwoFactorSettings(){
+    this.twoFactorSettings=null; this.twoFactorError=''; this.twoFactorBusy=true;
+    try { this.twoFactorSettings=await firstValueFrom(this.api.twoFactorSettings()); }
+    catch(error: unknown){ this.twoFactorError=this.api.errorMessage(error); }
+    finally { this.twoFactorBusy=false; }
+  }
+  async requestTwoFactorChange(){
+    if(this.twoFactorBusy || !this.twoFactorSettings || !this.twoFactorPassword) return;
+    this.twoFactorBusy=true; this.twoFactorError='';
+    try {
+      const challenge=await firstValueFrom(this.api.requestTwoFactorChange(this.twoFactorPassword,!this.twoFactorSettings.enabled));
+      this.setTwoFactorChallenge(challenge);
+    } catch(error: unknown){ this.twoFactorError=this.api.errorMessage(error); }
+    finally { this.twoFactorPassword=''; this.twoFactorBusy=false; }
+  }
+  async verifyTwoFactor(){
+    const challenge=this.twoFactorChallenge;
+    if(this.twoFactorBusy || !challenge || !/^\d{6}$/.test(this.twoFactorCode)) return;
+    this.twoFactorBusy=true; this.twoFactorError='';
+    try {
+      const result=await firstValueFrom(this.api.verifyTwoFactor(challenge.challengeId,this.twoFactorCode,challenge.purpose!=='LOGIN'));
+      this.clearTwoFactor();
+      this.twoFactorBusy=false;
+      if('token' in result) this.startSession(result,`Bienvenido, ${result.user.name}.`);
+      else {
+        this.twoFactorSettings=result;
+        // Settings changes revoke every existing session, including this one, deliberately.
+        this.session=null; this.logout(); this.nav('login');
+        this.showToast(`2FA ${result.enabled ? 'activado' : 'desactivado'}. Inicia sesión nuevamente.`);
+      }
+    } catch(error: unknown){ this.twoFactorError=this.api.errorMessage(error); }
+    finally { this.twoFactorCode=''; this.twoFactorBusy=false; }
+  }
+  async resendTwoFactor(){
+    const challenge=this.twoFactorChallenge;
+    if(this.twoFactorBusy || !challenge || this.twoFactorResendRemaining>0 || !this.twoFactorRemaining) return;
+    this.twoFactorBusy=true; this.twoFactorError='';
+    try { this.setTwoFactorChallenge(await firstValueFrom(this.api.resendTwoFactor(challenge.challengeId,challenge.purpose!=='LOGIN'))); }
+    catch(error: unknown){ this.twoFactorError=this.api.errorMessage(error); }
+    finally { this.twoFactorBusy=false; }
+  }
+  async cancelTwoFactor(){
+    const challenge=this.twoFactorChallenge;
+    if(this.twoFactorBusy || !challenge) return;
+    this.twoFactorBusy=true;
+    try {
+      await firstValueFrom(this.api.cancelTwoFactor(challenge.challengeId,challenge.purpose!=='LOGIN'));
+      this.clearTwoFactor();
+      this.twoFactorBusy=false;
+      if(challenge.purpose==='LOGIN') this.nav('login');
+    } catch(error: unknown){ this.twoFactorError=this.api.errorMessage(error); }
+    finally { this.twoFactorBusy=false; }
+  }
+  async oauthLogin(provider: ExternalAuthProvider){
+    if (!this.googleLoginEnabled || this.authLoading) return;
+    if (!this.firebaseAuth.enabled) {
+      this.showToast('El acceso OAuth no está configurado.');
+      return;
+    }
+    this.authLoading=true;
+    try {
+      const identity = await this.firebaseAuth.obtainIdentityToken(provider);
+      if (identity.status === 'verification-required') {
+        this.verificationEmail = identity.email;
+        this.verificationProvider = identity.provider;
+        this.verificationMessage = '';
+        this.verificationError = '';
+        this.nav('verify-email');
+        return;
+      }
+      await this.completeOAuthLogin(identity.idToken);
+    } catch (error: unknown) {
+      this.showToast(error instanceof HttpErrorResponse
+        ? this.api.errorMessage(error) : this.firebaseAuth.errorMessage(error, provider));
+    } finally {
+      this.authLoading=false;
+    }
+  }
+  async sendVerificationEmail(){
+    if (this.authLoading) return;
+    this.authLoading = true;
+    this.verificationMessage = '';
+    this.verificationError = '';
+    try {
+      await this.firebaseAuth.sendPendingVerification();
+      this.verificationMessage = 'Correo enviado. Revisa tu bandeja de entrada y spam. Abre el enlace y luego pulsa «Ya verifiqué mi correo». Espera 60 segundos antes de reenviar.';
+    } catch (error: unknown) {
+      this.verificationError = this.firebaseAuth.errorMessage(error, this.verificationProvider, true);
+    } finally {
+      this.authLoading = false;
+    }
+  }
+  async confirmVerificationEmail(){
+    if (this.authLoading) return;
+    this.authLoading = true;
+    this.verificationMessage = '';
+    this.verificationError = '';
+    try {
+      const identity = await this.firebaseAuth.confirmPendingVerification();
+      await this.completeOAuthLogin(identity.idToken);
+    } catch (error: unknown) {
+      this.verificationError = error instanceof HttpErrorResponse
+        ? this.api.errorMessage(error)
+        : this.firebaseAuth.errorMessage(error, this.verificationProvider, true);
+    } finally {
+      this.authLoading = false;
+    }
+  }
+  async cancelVerificationEmail(){
+    if (this.authLoading) return;
+    this.authLoading = true;
+    try {
+      await this.firebaseAuth.signOut();
+      this.verificationEmail = '';
+      this.nav(this.session ? 'dashboard' : 'login');
+    } catch (error: unknown) {
+      this.verificationError = this.firebaseAuth.errorMessage(error, this.verificationProvider, true);
+    } finally {
+      this.authLoading = false;
+    }
+  }
+  private async completeOAuthLogin(idToken: string){
+    const response = await firstValueFrom(this.api.exchangeFirebaseGoogleToken({idToken}));
+    await this.firebaseAuth.signOut().catch(()=>undefined);
+    this.verificationEmail = '';
+    this.startSession(response, `Bienvenido, ${response.user.name}.`);
+  }
   logout(){
+    if(this.twoFactorBusy) return;
+    this.clearTwoFactor(); this.twoFactorSettings=null;
     if(this.session) this.api.logout().subscribe({
       error:()=>this.showToast('La sesión se cerró localmente, pero no se pudo confirmar el cierre en el servidor.')
     });
     localStorage.removeItem(TOKEN_KEY);
+    void this.firebaseAuth.signOut().catch(()=>undefined);
     this.session=null; this.apiUsers=[]; this.apiRoles=[]; this.apiPermissions=[]; this.allUserRoles=[]; this.allRolePerms=[];
     this.nav('home'); this.showToast('Sesión cerrada.');
   }
 
   /* ======================= Navegación ======================= */
   nav(page:Page){
+    if (this.twoFactorBusy && (this.page==='two-factor' || this.page==='security-settings')) return;
+    if (page !== this.page && this.twoFactorChallenge && (this.page==='two-factor' || this.page==='security-settings')) {
+      // Leaving abandons this flow. No session has been created for a login challenge.
+      const challenge=this.twoFactorChallenge;
+      this.api.cancelTwoFactor(challenge.challengeId,challenge.purpose!=='LOGIN').subscribe({error:()=>undefined});
+      this.clearTwoFactor();
+    }
     if(!PUBLIC_PAGES.includes(page) && !this.session){ this.page='login'; this.mobileMenu=false; this.showToast('Inicia sesión para continuar.'); return; }
     if(ADMIN_PAGES.includes(page) && !this.isAdmin){ this.mobileMenu=false; this.showToast('Necesitas el rol Administrador para acceder a Seguridad.'); return; }
     if(page===this.page && page==='role-permissions'){ this.mobileMenu=false; return; }
     if(this.page==='role-permissions' && this.rolePermissionAssignment
       && !this.rolePermissionAssignment.confirmAbandonPendingChanges()) return;
+    if (page !== this.page && (this.page === 'reset-password' || this.page === 'forgot')) {
+      this.resetToken = ''; this.newPassword = ''; this.confirmNewPassword = '';
+      this.recoveryMessage = ''; this.recoveryError = ''; this.resetComplete = false;
+    }
     this.page=page; this.mobileMenu=false; this.toast=''; this.search='';
     if(ADMIN_PAGES.includes(page)) this.loadAdminData();
     if(page==='profile') this.loadMyProfile();
+    if(page==='security-settings') void this.loadTwoFactorSettings();
   }
   openAdmin(){ this.nav('role-permissions'); }
   isAdminPage():boolean{ return ADMIN_PAGES.includes(this.page); }
@@ -309,7 +563,7 @@ export class AppComponent implements OnInit {
   loadMyProfile(){
     if(!this.session) return;
     const user=this.session.user;
-    this.profileForm={name:user.name,email:user.email,password:'',phone:'',birthDate:'',profileId:null};
+    this.profileForm={name:user.name,email:user.email,password:'',currentPassword:'',phone:'',birthDate:'',profileId:null};
     this.profileError='';
     this.api.getMyUserDetail().subscribe({
       next:d=>{ this.profileForm.phone=d.profile?.phone ?? ''; this.profileForm.birthDate=d.profile?.birthDate ?? ''; this.profileForm.profileId=d.profile?.id ?? null; },
@@ -327,7 +581,8 @@ export class AppComponent implements OnInit {
     if(hasPhone && (f.phone.trim().length<7||f.phone.trim().length>20)){this.profileError='El teléfono debe tener entre 7 y 20 caracteres.';return;}
     this.saving=true;
     try{
-      const body:{name:string;email:string;password?:string}={name:f.name.trim(),email:f.email.trim()};
+      const body:{name:string;email:string;password?:string;currentPassword?:string}={name:f.name.trim(),email:f.email.trim()};
+      if(f.currentPassword) body.currentPassword=f.currentPassword;
       if(f.password) body.password=f.password;
       const updated=await firstValueFrom(this.api.updateMyUser(body));
       this.session={...this.session,user:updated};
@@ -338,7 +593,7 @@ export class AppComponent implements OnInit {
       f.password='';
       this.showToast('Perfil actualizado correctamente.');
     }catch(e){ this.profileError=this.api.errorMessage(e); }
-    finally{ this.saving=false; }
+    finally{ this.profileForm.currentPassword=''; this.saving=false; }
   }
 
   /* ======================= Deportes (demostración) ======================= */

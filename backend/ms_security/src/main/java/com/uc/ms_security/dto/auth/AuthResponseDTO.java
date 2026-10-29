@@ -10,7 +10,7 @@ import com.uc.ms_security.dto.user.UserResponseDTO;
 import lombok.Value;
 
 @Value
-public class AuthResponseDTO {
+public class AuthResponseDTO implements LoginResultDTO {
     String token;
     LocalDateTime expiration;
     UserResponseDTO user;
