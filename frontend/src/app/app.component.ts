@@ -7,14 +7,14 @@ import { firstValueFrom, forkJoin } from 'rxjs';
 import { ApiService, AuthResponse, PermissionDto, RoleDto, RolePermissionDto, UserDetailDto, UserDto, UserRoleDto } from './api.service';
 import { TOKEN_KEY } from './api.config';
 import { AuthSessionState } from './auth-session-state.service';
-import { FirebaseAuthService } from './firebase-auth.service';
+import { ExternalAuthProvider, FirebaseAuthService } from './firebase-auth.service';
 import { PermissionManagementComponent } from './features/security/permission-management/permission-management.component';
 import { RegistrationComponent } from './features/security/registration/registration.component';
 import { RolePermissionAssignmentComponent } from './features/security/role-permission-assignment/role-permission-assignment.component';
 
-type Page = 'home'|'login'|'register'|'forgot'|'dashboard'|'sports'|'teams'|'players'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
+type Page = 'home'|'login'|'register'|'forgot'|'verify-email'|'dashboard'|'sports'|'teams'|'players'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
 interface Sport { name:string; category:string; subs:string[]; status:'Activo'|'Inactivo'; description:string; teams:number; icon:string; }
-const PUBLIC_PAGES: Page[] = ['home','login','register','forgot'];
+const PUBLIC_PAGES: Page[] = ['home','login','register','forgot','verify-email'];
 const ADMIN_PAGES: Page[] = ['users','roles','permissions','role-permissions'];
 const ADMIN_ROLE = 'administrador';
 @Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent], templateUrl:'./app.component.html' })
@@ -50,6 +50,10 @@ export class AppComponent implements OnInit {
   session: AuthResponse | null = null;
   loginEmail=''; loginPassword='';
   authLoading = false;
+  verificationEmail = '';
+  verificationProvider: ExternalAuthProvider = 'google';
+  verificationMessage = '';
+  verificationError = '';
 
   /* ---------- Datos de seguridad (vienen del backend) ---------- */
   apiUsers: UserDto[] = [];
@@ -142,29 +146,87 @@ export class AppComponent implements OnInit {
       error:e=>{ this.authLoading=false; this.showToast(this.api.errorMessage(e)); }
     });
   }
-  async googleLogin(){
+  googleLogin(){ return this.oauthLogin('google'); }
+  async oauthLogin(provider: ExternalAuthProvider){
     if (!this.googleLoginEnabled || this.authLoading) return;
     if (!this.firebaseAuth.enabled) {
-      this.showToast('El acceso con Google no está configurado.');
+      this.showToast('El acceso OAuth no está configurado.');
       return;
     }
     this.authLoading=true;
     try {
-      const identity = await this.firebaseAuth.obtainIdentityToken('google');
-      this.api.exchangeFirebaseGoogleToken({idToken:identity.idToken}).subscribe({
-        next:r=>{ this.authLoading=false; this.startSession(r,`Bienvenido, ${r.user.name}.`); },
-        error:e=>{ this.authLoading=false; this.showToast(this.api.errorMessage(e)); }
-      });
+      const identity = await this.firebaseAuth.obtainIdentityToken(provider);
+      if (identity.status === 'verification-required') {
+        this.verificationEmail = identity.email;
+        this.verificationProvider = identity.provider;
+        this.verificationMessage = '';
+        this.verificationError = '';
+        this.nav('verify-email');
+        return;
+      }
+      await this.completeOAuthLogin(identity.idToken);
     } catch (error: unknown) {
+      this.showToast(error instanceof HttpErrorResponse
+        ? this.api.errorMessage(error) : this.firebaseAuth.errorMessage(error, provider));
+    } finally {
       this.authLoading=false;
-      this.showToast(this.firebaseAuth.errorMessage(error));
     }
+  }
+  async sendVerificationEmail(){
+    if (this.authLoading) return;
+    this.authLoading = true;
+    this.verificationMessage = '';
+    this.verificationError = '';
+    try {
+      await this.firebaseAuth.sendPendingVerification();
+      this.verificationMessage = 'Correo enviado. Revisa tu bandeja de entrada y spam. Abre el enlace y luego pulsa «Ya verifiqué mi correo». Espera 60 segundos antes de reenviar.';
+    } catch (error: unknown) {
+      this.verificationError = this.firebaseAuth.errorMessage(error, this.verificationProvider, true);
+    } finally {
+      this.authLoading = false;
+    }
+  }
+  async confirmVerificationEmail(){
+    if (this.authLoading) return;
+    this.authLoading = true;
+    this.verificationMessage = '';
+    this.verificationError = '';
+    try {
+      const identity = await this.firebaseAuth.confirmPendingVerification();
+      await this.completeOAuthLogin(identity.idToken);
+    } catch (error: unknown) {
+      this.verificationError = error instanceof HttpErrorResponse
+        ? this.api.errorMessage(error)
+        : this.firebaseAuth.errorMessage(error, this.verificationProvider, true);
+    } finally {
+      this.authLoading = false;
+    }
+  }
+  async cancelVerificationEmail(){
+    if (this.authLoading) return;
+    this.authLoading = true;
+    try {
+      await this.firebaseAuth.signOut();
+      this.verificationEmail = '';
+      this.nav(this.session ? 'dashboard' : 'login');
+    } catch (error: unknown) {
+      this.verificationError = this.firebaseAuth.errorMessage(error, this.verificationProvider, true);
+    } finally {
+      this.authLoading = false;
+    }
+  }
+  private async completeOAuthLogin(idToken: string){
+    const response = await firstValueFrom(this.api.exchangeFirebaseGoogleToken({idToken}));
+    await this.firebaseAuth.signOut().catch(()=>undefined);
+    this.verificationEmail = '';
+    this.startSession(response, `Bienvenido, ${response.user.name}.`);
   }
   logout(){
     if(this.session) this.api.logout().subscribe({
       error:()=>this.showToast('La sesión se cerró localmente, pero no se pudo confirmar el cierre en el servidor.')
     });
     localStorage.removeItem(TOKEN_KEY);
+    void this.firebaseAuth.signOut().catch(()=>undefined);
     this.session=null; this.apiUsers=[]; this.apiRoles=[]; this.apiPermissions=[]; this.allUserRoles=[]; this.allRolePerms=[];
     this.nav('home'); this.showToast('Sesión cerrada.');
   }

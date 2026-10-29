@@ -1,6 +1,7 @@
 package com.uc.ms_security.service;
 
 import java.util.Locale;
+import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.ObjectProvider;
@@ -22,11 +23,12 @@ import com.uc.ms_security.repository.UserRoleRepository;
 import com.uc.ms_security.security.FirebaseIdTokenVerifier;
 import com.uc.ms_security.security.VerifiedFirebaseIdentity;
 
-/** Creates/reuses only Google identities and exchanges them for an internal session. */
+/** Exchanges verified Firebase provider identities for an internal session. */
 @Service
 @Transactional
 public class GoogleOAuthLoginService {
-    private static final String GOOGLE_PROVIDER = "google.com";
+    private static final Set<String> SUPPORTED_PROVIDERS =
+            Set.of("google.com", "github.com", "microsoft.com");
 
     private final ObjectProvider<FirebaseIdTokenVerifier> firebaseIdTokenVerifier;
     private final ExternalIdentityRepository externalIdentityRepository;
@@ -57,14 +59,18 @@ public class GoogleOAuthLoginService {
                     "La autenticación externa no está configurada");
         }
         VerifiedFirebaseIdentity identity = verifier.verify(idToken);
-        validateGoogleIdentity(identity);
+        validateIdentity(identity);
 
         User user = externalIdentityRepository
                 .findByFirebaseProjectIdAndProviderAndFirebaseUid(
-                        projectId, GOOGLE_PROVIDER, identity.firebaseUid())
+                        projectId, identity.provider(), identity.firebaseUid())
                 .map(ExternalIdentity::getUser)
                 .orElseGet(() -> createUser(identity));
 
+        if (user.getAccountType() != AccountType.EXTERNAL) {
+            throw new ApplicationException(ErrorCase.INVALID_OPERATION,
+                    "La identidad externa no puede acceder a una cuenta local");
+        }
         if (!user.isEnabled()) {
             throw new ApplicationException(ErrorCase.UNAUTHORIZED, "La cuenta no está habilitada");
         }
@@ -75,7 +81,9 @@ public class GoogleOAuthLoginService {
         String email = identity.email().trim().toLowerCase(Locale.ROOT);
         userRepository.findByEmail(email).ifPresent(user -> {
             throw new ApplicationException(ErrorCase.INVALID_OPERATION,
-                    "El correo ya está asociado a una cuenta de SportManager");
+                    user.getAccountType() == AccountType.LOCAL
+                            ? "El correo ya está asociado a una cuenta local. Inicia sesión con contraseña."
+                            : "El correo ya está asociado a otra identidad externa. Usa el proveedor original.");
         });
 
         User user = new User();
@@ -97,7 +105,7 @@ public class GoogleOAuthLoginService {
         ExternalIdentity externalIdentity = new ExternalIdentity();
         externalIdentity.setUser(savedUser);
         externalIdentity.setFirebaseProjectId(projectId);
-        externalIdentity.setProvider(GOOGLE_PROVIDER);
+        externalIdentity.setProvider(identity.provider());
         externalIdentity.setFirebaseUid(identity.firebaseUid());
         try {
             externalIdentityRepository.saveAndFlush(externalIdentity);
@@ -109,17 +117,24 @@ public class GoogleOAuthLoginService {
         return savedUser;
     }
 
-    private static void validateGoogleIdentity(VerifiedFirebaseIdentity identity) {
-        if (!GOOGLE_PROVIDER.equals(identity.provider()) || identity.firebaseUid() == null
-                || identity.firebaseUid().isBlank() || identity.email() == null
-                || identity.email().isBlank() || !identity.emailVerified()) {
+    private static void validateIdentity(VerifiedFirebaseIdentity identity) {
+        if (identity.provider() == null || !SUPPORTED_PROVIDERS.contains(identity.provider())
+                || identity.firebaseUid() == null || identity.firebaseUid().isBlank()) {
             throw new ApplicationException(ErrorCase.UNAUTHORIZED,
-                    "La identidad de Google no contiene información verificada suficiente");
+                    "El proveedor OAuth no está admitido o su identidad no es válida");
+        }
+        if (identity.email() == null || identity.email().isBlank()) {
+            throw new ApplicationException(ErrorCase.UNAUTHORIZED,
+                    "Firebase no proporcionó una dirección de correo verificable. No se puede completar el acceso.");
+        }
+        if (!identity.emailVerified()) {
+            throw new ApplicationException(ErrorCase.UNAUTHORIZED,
+                    "Verifica tu correo con Firebase y confirma la verificación antes de completar el acceso.");
         }
         String email = identity.email().trim();
         if (email.indexOf('@') <= 0 || email.endsWith("@")) {
             throw new ApplicationException(ErrorCase.UNAUTHORIZED,
-                    "La identidad de Google no contiene información verificada suficiente");
+                    "El proveedor no entregó un correo válido");
         }
     }
 

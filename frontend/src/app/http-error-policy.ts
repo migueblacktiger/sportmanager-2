@@ -27,7 +27,7 @@ export function userFacingHttpError(
       return 'No se pudo completar el registro. Inténtalo nuevamente.';
     }
     if (isAuthEndpoint(url, '/auth/oauth/firebase')) {
-      return body?.message?.trim() || 'SportManager no pudo validar la identidad de Google.';
+      return body?.message?.trim() || 'SportManager no pudo validar la identidad del proveedor OAuth.';
     }
     return 'Tu sesión expiró o ya no es válida. Inicia sesión nuevamente.';
   }
