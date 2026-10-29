@@ -19,4 +19,8 @@ public interface SessionRepository
 
     @EntityGraph(attributePaths = "user")
     Optional<Session> findByToken(String token);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("delete from Session s where s.user.id = :userId")
+    int deleteAllForPasswordRecovery(@org.springframework.data.repository.query.Param("userId") Long userId);
 }

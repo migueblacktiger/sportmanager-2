@@ -59,6 +59,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
     private final PermissionMapper permissionMapper;
+    private final org.springframework.beans.factory.ObjectProvider<TwoFactorService> twoFactor;
 
     /** Crea una cuenta pública con el rol Usuario y abre una sesión. */
     public AuthResponseDTO register(RegisterRequestDTO dto) {
@@ -86,8 +87,10 @@ public class AuthService {
         return openSession(savedUser);
     }
 
-    public AuthResponseDTO login(LoginRequestDTO dto) {
-        User user = userRepository.findByEmail(dto.getEmail())
+    public com.uc.ms_security.dto.auth.LoginResultDTO login(LoginRequestDTO dto, String remoteAddress) {
+        Long userId = userRepository.findPasswordRecoveryUserIdByEmail(dto.getEmail())
+                .orElseThrow(this::invalidCredentials);
+        User user = userRepository.findForPasswordRecoveryById(userId)
                 .orElseThrow(this::invalidCredentials);
 
         if (!user.isEnabled() || user.getAccountType() != AccountType.LOCAL
@@ -95,6 +98,7 @@ public class AuthService {
             throw invalidCredentials();
         }
 
+        if (user.isTwoFactorEnabled()) return twoFactor.getObject().beginLogin(user, remoteAddress);
         return openSession(user);
     }
 

@@ -36,8 +36,10 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public AuthResponseDTO login(@Valid @RequestBody LoginRequestDTO dto) {
-        return authService.login(dto);
+    public org.springframework.http.ResponseEntity<com.uc.ms_security.dto.auth.LoginResultDTO> login(@Valid @RequestBody LoginRequestDTO dto,
+            jakarta.servlet.http.HttpServletRequest request) {
+        return org.springframework.http.ResponseEntity.ok().cacheControl(org.springframework.http.CacheControl.noStore())
+                .body(authService.login(dto, request.getRemoteAddr()));
     }
 
     @PostMapping("/oauth/firebase")

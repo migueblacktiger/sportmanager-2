@@ -55,6 +55,9 @@ public class User {
     @Column(nullable = false)
     private boolean enabled = true;
 
+    @Column(name = "two_factor_enabled", nullable = false)
+    private boolean twoFactorEnabled = false;
+
     @OneToOne(
             mappedBy = "user",
             cascade = CascadeType.ALL,

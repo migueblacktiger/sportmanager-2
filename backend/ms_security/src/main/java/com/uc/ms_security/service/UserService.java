@@ -13,6 +13,7 @@ import com.uc.ms_security.dto.user.UserResponseDTO;
 import com.uc.ms_security.dto.user.UserRolesResponseDTO;
 import com.uc.ms_security.dto.user.UserSessionsResponseDTO;
 import com.uc.ms_security.entity.User;
+import com.uc.ms_security.entity.AccountType;
 import com.uc.ms_security.exception.ApplicationException;
 import com.uc.ms_security.exception.ErrorCase;
 import com.uc.ms_security.mapper.UserMapper;
@@ -96,7 +97,12 @@ public class UserService {
     }
 
     public UserResponseDTO update(Long id, UpdateUserDTO dto) {
-        User user = findUser(id);
+        User user = userRepository.findForPasswordRecoveryById(id)
+                .orElseThrow(() -> new ApplicationException(ErrorCase.NOT_FOUND, "Usuario no encontrado"));
+        if (user.isTwoFactorEnabled() && !user.getEmail().equals(dto.getEmail())) {
+            throw new ApplicationException(ErrorCase.INVALID_OPERATION,
+                    "Desactiva 2FA con tu contraseña y código antes de cambiar el correo.");
+        }
         if (userRepository.existsByEmailAndIdNot(dto.getEmail(), id)) {
             throw new ApplicationException(
                     ErrorCase.ALREADY_EXISTS,
@@ -109,6 +115,17 @@ public class UserService {
         }
         User updatedUser = userRepository.save(user);
         return userMapper.toResponseDTO(updatedUser);
+    }
+    public UserResponseDTO updateMyAccount(Long id, UpdateUserDTO dto) {
+        User user = userRepository.findForPasswordRecoveryById(id).orElseThrow();
+        boolean sensitive = !user.getEmail().equals(dto.getEmail()) || dto.getPassword() != null;
+        if (sensitive && user.getAccountType() == AccountType.LOCAL
+                && (dto.getCurrentPassword() == null || user.getPassword() == null
+                    || !passwordEncoder.matches(dto.getCurrentPassword(), user.getPassword()))) {
+            throw new ApplicationException(ErrorCase.INVALID_OPERATION,
+                    "Ingresa tu contraseña actual para cambiar tu correo o contraseña.");
+        }
+        return update(id, dto);
     }
     public void delete(Long id) {
         User user = findUser(id);

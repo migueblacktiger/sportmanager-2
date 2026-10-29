@@ -64,7 +64,7 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
         Session session = authService.findValidSession(bearerToken(request));
         Long authenticatedUserId = session.getUser().getId();
         request.setAttribute(RequestUserContext.USER_ID_ATTRIBUTE, authenticatedUserId);
-        if (isSessionEndpoint(path, method)) {
+        if (isSessionEndpoint(path, method) || isOwnTwoFactorRequest(path, method)) {
             return true;
         }
         if (isDisabledSessionMutation(path, method)) {
@@ -118,7 +118,19 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
         return "POST".equalsIgnoreCase(method)
                 && ("/api/auth/register".equals(path)
                     || "/api/auth/login".equals(path)
-                    || "/api/auth/oauth/firebase".equals(path));
+                    || "/api/auth/oauth/firebase".equals(path)
+                    || "/api/auth/password/forgot".equals(path)
+                    || "/api/auth/password/reset".equals(path)
+                    || "/api/auth/2fa/verify".equals(path)
+                    || "/api/auth/2fa/resend".equals(path)
+                    || "/api/auth/2fa/cancel".equals(path));
+    }
+
+    private static boolean isOwnTwoFactorRequest(String path, String method) {
+        return ("GET".equalsIgnoreCase(method) && "/api/auth/2fa/settings".equals(path))
+                || ("POST".equalsIgnoreCase(method) && Set.of(
+                    "/api/auth/2fa/settings/request", "/api/auth/2fa/settings/confirm",
+                    "/api/auth/2fa/settings/resend", "/api/auth/2fa/settings/cancel").contains(path));
     }
 
     private static boolean isSessionEndpoint(String path, String method) {

@@ -21,6 +21,16 @@ export interface AuthResponse {
   permissions: PermissionDto[];
 }
 export interface ApiError { errorCase?: string; message?: string; errors?: Record<string, string>; }
+export interface TwoFactorChallenge {
+  twoFactorRequired: true;
+  challengeId: string;
+  expiresAt: string;
+  expiresInSeconds: number;
+  resendAfterSeconds: number;
+  purpose: 'LOGIN' | 'ENABLE' | 'DISABLE';
+  maskedEmail: string;
+}
+export interface TwoFactorSettings { available: boolean; enabled: boolean; configured: boolean; }
 
 /* ---------- Interceptor: adjunta el token de sesión ---------- */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
@@ -48,19 +58,38 @@ export class ApiService {
   register(body: { name: string; email: string; password: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${API_URL}/auth/register`, body);
   }
-  login(body: { email: string; password: string }): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${API_URL}/auth/login`, body);
+  login(body: { email: string; password: string }): Observable<AuthResponse | TwoFactorChallenge> {
+    return this.http.post<AuthResponse | TwoFactorChallenge>(`${API_URL}/auth/login`, body);
+  }
+  twoFactorSettings(): Observable<TwoFactorSettings> { return this.http.get<TwoFactorSettings>(`${API_URL}/auth/2fa/settings`); }
+  requestTwoFactorChange(password: string, enabled: boolean): Observable<TwoFactorChallenge> {
+    return this.http.post<TwoFactorChallenge>(`${API_URL}/auth/2fa/settings/request`, { password, enabled });
+  }
+  verifyTwoFactor(challengeId: string, code: string, settings: boolean): Observable<AuthResponse | TwoFactorSettings> {
+    return this.http.post<AuthResponse | TwoFactorSettings>(`${API_URL}/auth/2fa/${settings ? 'settings/confirm' : 'verify'}`, { challengeId, code });
+  }
+  resendTwoFactor(challengeId: string, settings: boolean): Observable<TwoFactorChallenge> {
+    return this.http.post<TwoFactorChallenge>(`${API_URL}/auth/2fa/${settings ? 'settings/resend' : 'resend'}`, { challengeId });
+  }
+  cancelTwoFactor(challengeId: string, settings: boolean): Observable<unknown> {
+    return this.http.post(`${API_URL}/auth/2fa/${settings ? 'settings/cancel' : 'cancel'}`, { challengeId });
   }
   exchangeFirebaseGoogleToken(body: { idToken: string }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${API_URL}/auth/oauth/firebase`, body);
   }
   me(): Observable<AuthResponse> { return this.http.get<AuthResponse>(`${API_URL}/auth/me`); }
   logout(): Observable<void> { return this.http.post<void>(`${API_URL}/auth/logout`, {}); }
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${API_URL}/auth/password/forgot`, { email });
+  }
+  resetPassword(token: string, password: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${API_URL}/auth/password/reset`, { token, password });
+  }
 
   /* Usuarios */
   getUsers(): Observable<UserDto[]> { return this.http.get<UserDto[]>(`${API_URL}/users`); }
   getMyUserDetail(): Observable<UserDetailDto> { return this.http.get<UserDetailDto>(`${API_URL}/users/me/detail`); }
-  updateMyUser(body: { name: string; email: string; password?: string }): Observable<UserDto> {
+  updateMyUser(body: { name: string; email: string; password?: string; currentPassword?: string }): Observable<UserDto> {
     return this.http.put<UserDto>(`${API_URL}/users/me`, body);
   }
   getUserDetail(id: number): Observable<UserDetailDto> { return this.http.get<UserDetailDto>(`${API_URL}/users/${id}/detail`); }
