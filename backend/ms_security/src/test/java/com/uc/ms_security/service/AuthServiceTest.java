@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -66,6 +67,9 @@ class AuthServiceTest {
     @Mock
     private PermissionMapper permissionMapper;
 
+    @Mock
+    private ObjectProvider<TwoFactorService> twoFactor;
+
     private AuthService authService;
 
     @BeforeEach
@@ -80,7 +84,8 @@ class AuthServiceTest {
                 new com.uc.ms_security.security.InternalJwtService(java.util.Base64.getEncoder().encodeToString(new byte[32]), "sportmanager", "sportmanager-api"),
                 userMapper,
                 roleMapper,
-                permissionMapper
+                permissionMapper,
+                twoFactor
         );
     }
 

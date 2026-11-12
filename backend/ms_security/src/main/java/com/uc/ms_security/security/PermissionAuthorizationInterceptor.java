@@ -1,9 +1,8 @@
 package com.uc.ms_security.security;
 
 import java.util.Set;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
+import java.util.regex.Matcher;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -14,14 +13,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.util.pattern.PathPattern;
 
-import com.uc.ms_security.entity.Permission;
-import com.uc.ms_security.entity.RolePermission;
 import com.uc.ms_security.entity.Session;
-import com.uc.ms_security.entity.UserRole;
-import com.uc.ms_security.repository.PermissionRepository;
-import com.uc.ms_security.repository.RolePermissionRepository;
-import com.uc.ms_security.repository.UserRoleRepository;
 import com.uc.ms_security.service.AuthService;
+import com.uc.ms_security.service.PermissionAuthorizationService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,14 +26,11 @@ import lombok.RequiredArgsConstructor;
 public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
 
     private static final String API_PREFIX = "/api/";
-    private static final Pattern PATH_VARIABLE = Pattern.compile("\\{[^{}]+\\}");
     private static final Pattern USER_SESSIONS_PATH =
             Pattern.compile("^/api/users/(\\d+)/sessions(?:/(\\d+))?$");
 
     private final AuthService authService;
-    private final PermissionRepository permissionRepository;
-    private final UserRoleRepository userRoleRepository;
-    private final RolePermissionRepository rolePermissionRepository;
+    private final PermissionAuthorizationService permissionAuthorizationService;
 
     @Override
     public boolean preHandle(
@@ -64,7 +55,9 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
         Session session = authService.findValidSession(bearerToken(request));
         Long authenticatedUserId = session.getUser().getId();
         request.setAttribute(RequestUserContext.USER_ID_ATTRIBUTE, authenticatedUserId);
-        if (isSessionEndpoint(path, method) || isOwnTwoFactorRequest(path, method)) {
+        if (("POST".equalsIgnoreCase(method)
+                && "/api/internal/security/permissions-validation".equals(path))
+                || isSessionEndpoint(path, method) || isOwnTwoFactorRequest(path, method)) {
             return true;
         }
         if (isDisabledSessionMutation(path, method)) {
@@ -87,26 +80,8 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
             throw forbidden();
         }
 
-        Set<Long> roleIds = userRoleRepository.findAllByUserId(session.getUser().getId())
-                .stream()
-                .map(UserRole::getRole)
-                .map(role -> role.getId())
-                .collect(Collectors.toSet());
-        if (roleIds.isEmpty()) {
-            throw forbidden();
-        }
-
-        Set<Long> effectivePermissionIds = rolePermissionRepository.findAllByRoleIdIn(roleIds)
-                .stream()
-                .map(RolePermission::getPermission)
-                .map(permission -> permission.getId())
-                .collect(Collectors.toSet());
-
-        boolean authorized = permissionRepository.findAllByMethodIgnoreCase(method)
-                .stream()
-                .filter(permission -> sameRoutePattern(permission.getUrl(), handlerPattern))
-                .map(Permission::getId)
-                .anyMatch(effectivePermissionIds::contains);
+        boolean authorized = permissionAuthorizationService.hasPermissionForHandler(
+                authenticatedUserId, method, handlerPattern);
         if (!authorized) {
             throw forbidden();
         }
@@ -187,14 +162,6 @@ public class PermissionAuthorizationInterceptor implements HandlerInterceptor {
             return pathPattern.getPatternString();
         }
         return pattern instanceof String stringPattern ? stringPattern : null;
-    }
-
-    private static boolean sameRoutePattern(String permissionUrl, String handlerPattern) {
-        return normalizePathVariables(permissionUrl).equals(normalizePathVariables(handlerPattern));
-    }
-
-    private static String normalizePathVariables(String path) {
-        return PATH_VARIABLE.matcher(path).replaceAll("{}");
     }
 
     private static ResponseStatusException unauthorized() {

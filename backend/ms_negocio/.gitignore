@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+# Variables de entorno
+.env
+.env.*
+!.env.example
