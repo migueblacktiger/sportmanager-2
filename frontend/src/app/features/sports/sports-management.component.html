@@ -1,0 +1,62 @@
+<section aria-labelledby="sports-title">
+  <div class="page-heading">
+    <div><span class="eyebrow">CATÁLOGO DE DISCIPLINAS</span><h1 id="sports-title">Gestión de Deportes</h1><p>Organiza tus disciplinas y sus subdeportes.</p></div>
+    <button class="btn btn-primary" [disabled]="loading || saving || detailLoading || !loaded" (click)="openNew()">＋ Nuevo deporte</button>
+  </div>
+  <p *ngIf="message" class="notice success" role="status">{{message}}</p>
+  <div *ngIf="error" class="notice error" role="alert">{{error}} <button class="text-button" [disabled]="loading || saving" (click)="refresh()">Actualizar listado</button></div>
+  <div class="toolbar sports-toolbar">
+    <div class="search-box"><label for="sport-search" class="sr-only">Buscar deportes por nombre o descripción</label><span aria-hidden="true">⌕</span><input id="sport-search" [(ngModel)]="search" type="search" placeholder="Buscar nombre o descripción"></div>
+    <label class="filter-label" for="sport-status">Estado<select id="sport-status" [(ngModel)]="statusFilter"><option value="all">Todos</option><option value="active">Activos</option><option value="inactive">Inactivos</option></select></label>
+    <label class="filter-label" for="sport-parent-filter">Jerarquía<select id="sport-parent-filter" [(ngModel)]="parentFilter"><option value="all">Todos los deportes</option><option value="roots">Solo principales</option><option *ngFor="let sport of sports; trackBy: trackId" [ngValue]="sport.id">Subdeportes de {{sport.name}}</option></select></label>
+    <button class="btn btn-outline" [disabled]="loading || saving || detailLoading" (click)="refresh()">{{loading ? 'Cargando…' : 'Actualizar'}}</button>
+  </div>
+  <p *ngIf="loading" role="status">Cargando deportes…</p>
+  <div class="sports-layout" [attr.aria-busy]="loading || saving">
+    <div class="panel sports-table-panel">
+      <div class="table-scroll"><table><caption class="sr-only">Deportes registrados y acciones de gestión</caption><thead><tr><th scope="col">Deporte</th><th scope="col">Padre</th><th scope="col">Subdeportes</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+      <tbody><tr *ngFor="let sport of filteredSports; trackBy: trackId" [class.selected-row]="selected?.id === sport.id">
+        <td><button class="text-button sport-link" [disabled]="saving || detailLoading || loading" (click)="showDetail(sport)">{{sport.name}}</button><small class="sport-id">#{{sport.id}}</small></td>
+        <td>{{parentName(sport.parentId)}}</td>
+        <td><button class="text-button" (click)="parentFilter = sport.id" [attr.aria-label]="'Consultar subdeportes de ' + sport.name">{{childCount(sport.id)}} subdeportes</button></td>
+        <td><span class="status-pill" [class.active]="sport.active">{{sport.active ? 'Activo' : 'Inactivo'}}</span></td>
+        <td><div class="sport-actions">
+          <button class="text-button" [disabled]="saving || detailLoading || loading" (click)="showDetail(sport, true)" [attr.aria-label]="'Editar ' + sport.name">Editar</button>
+          <button class="text-button" [disabled]="saving || loading || detailLoading" (click)="toggleActive(sport)" [attr.aria-label]="(sport.active ? 'Desactivar ' : 'Activar ') + sport.name">{{sport.active ? 'Desactivar' : 'Activar'}}</button>
+          <button class="text-button danger-text" [disabled]="saving || loading || detailLoading" (click)="remove(sport)" [attr.aria-label]="'Eliminar ' + sport.name">Eliminar</button>
+        </div></td>
+      </tr></tbody></table></div>
+      <div class="empty-state" *ngIf="!loading && loaded && !filteredSports.length">{{sports.length ? 'No hay coincidencias con estos filtros.' : 'Aún no hay deportes registrados.'}}</div>
+      <p class="results-count" *ngIf="loaded">{{filteredSports.length}} de {{sports.length}} deportes</p>
+    </div>
+    <aside class="panel detail-panel" aria-labelledby="sport-detail-title" [attr.aria-busy]="detailLoading">
+      <div class="panel-heading"><h2 id="sport-detail-title">Detalle del deporte</h2></div>
+      <p *ngIf="detailLoading" role="status">Consultando detalle…</p>
+      <ng-container *ngIf="selected as sport; else selectHint">
+        <div class="detail-title"><h3>{{sport.name}}</h3><span class="status-pill" [class.active]="sport.active">{{sport.active ? 'Activo' : 'Inactivo'}}</span></div>
+        <dl><dt>Identificador</dt><dd>#{{sport.id}}</dd><dt>Deporte padre</dt><dd>{{parentName(sport.parentId)}}</dd><dt>Descripción</dt><dd class="sport-description">{{sport.description || 'Sin descripción'}}</dd></dl>
+        <h3>Subdeportes asociados</h3>
+        <ul class="children-list"><li *ngFor="let child of children; trackBy: trackId"><button class="text-button" [disabled]="detailLoading || saving || loading" (click)="showDetail(child)">{{child.name}}</button><span>{{child.active ? 'Activo' : 'Inactivo'}}</span></li></ul>
+        <p class="muted" *ngIf="!children.length">No tiene subdeportes asociados.</p>
+        <button class="btn btn-outline" [disabled]="!sport.active || saving || loading || detailLoading" (click)="openNew(sport.id)">＋ Crear subdeporte</button>
+        <p class="muted" *ngIf="!sport.active">Activa este deporte para asignarle nuevos subdeportes.</p>
+      </ng-container>
+      <ng-template #selectHint><p class="muted">Selecciona un deporte para consultar su detalle y sus subdeportes.</p></ng-template>
+    </aside>
+  </div>
+</section>
+
+<dialog #editor class="modal-card sports-dialog" aria-labelledby="sport-editor-title" (cancel)="cancelEditor($event)">
+  <form #sportForm="ngForm" (ngSubmit)="save()">
+    <div class="modal-heading"><div><span class="eyebrow">CATÁLOGO DE DISCIPLINAS</span><h2 id="sport-editor-title">{{editing ? 'Editar deporte' : 'Registrar deporte'}}</h2></div><button type="button" class="close-button" [disabled]="saving" (click)="closeEditor()" aria-label="Cerrar formulario">×</button></div>
+    <p class="notice error" *ngIf="formError" role="alert">{{formError}}</p>
+    <fieldset class="form-grid" [disabled]="saving">
+      <div class="form-field full-field"><label for="sport-name">Nombre <b>*</b></label><input id="sport-name" name="name" [(ngModel)]="form.name" #name="ngModel" required maxlength="180" pattern=".*\S.*" autofocus aria-describedby="sport-name-hint sport-name-error" [attr.aria-invalid]="name.invalid && (name.touched || sportForm.submitted)"><small id="sport-name-hint">Máximo 180 caracteres. El catálogo no permite duplicados por mayúsculas o espacios, aunque el deporte esté inactivo.</small><span id="sport-name-error" class="field-error" *ngIf="name.invalid && (name.touched || sportForm.submitted)">Escribe un nombre de hasta 180 caracteres que no contenga solo espacios.</span></div>
+      <div class="form-field full-field"><label for="sport-description">Descripción (opcional)</label><textarea id="sport-description" name="description" [(ngModel)]="form.description" aria-describedby="sport-description-hint" [attr.aria-invalid]="descriptionBytes > 65535"></textarea><small id="sport-description-hint">{{descriptionBytes}} / 65535 bytes UTF-8</small><span class="field-error" *ngIf="descriptionBytes > 65535">La descripción supera el límite permitido.</span></div>
+      <div class="form-field full-field"><label for="sport-parent">Deporte padre (opcional)</label><select id="sport-parent" name="parentId" [(ngModel)]="form.parentId"><option [ngValue]="null">Sin padre · deporte principal</option><option *ngFor="let parent of availableParents; trackBy: trackId" [ngValue]="parent.id">{{parent.name}}{{parent.active ? '' : ' (inactivo · asignación actual)'}}</option></select><small>Quitar el padre convierte el registro en deporte principal. No se ofrecen el propio deporte ni sus descendientes.</small></div>
+      <div class="form-field" *ngIf="editing"><label for="sport-active">Estado</label><select id="sport-active" name="active" [(ngModel)]="form.active"><option [ngValue]="true">Activo</option><option [ngValue]="false">Inactivo</option></select></div>
+    </fieldset>
+    <p class="muted" *ngIf="!editing">Los deportes nuevos se registran activos.</p>
+    <div class="modal-actions"><button type="button" class="btn btn-outline" [disabled]="saving" (click)="closeEditor()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="saving || sportForm.invalid || !validFields">{{saving ? 'Guardando…' : 'Guardar deporte'}}</button></div>
+  </form>
+</dialog>

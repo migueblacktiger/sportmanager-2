@@ -12,12 +12,13 @@ import { PermissionManagementComponent } from './features/security/permission-ma
 import { RegistrationComponent } from './features/security/registration/registration.component';
 import { RolePermissionAssignmentComponent } from './features/security/role-permission-assignment/role-permission-assignment.component';
 
+import { SportsManagementComponent } from './features/sports/sports-management.component';
+
 type Page = 'home'|'login'|'register'|'forgot'|'reset-password'|'verify-email'|'two-factor'|'security-settings'|'dashboard'|'sports'|'teams'|'players'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
-interface Sport { name:string; category:string; subs:string[]; status:'Activo'|'Inactivo'; description:string; teams:number; icon:string; }
 const PUBLIC_PAGES: Page[] = ['home','login','register','forgot','reset-password','verify-email','two-factor'];
 const ADMIN_PAGES: Page[] = ['users','roles','permissions','role-permissions'];
 const ADMIN_ROLE = 'administrador';
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent], templateUrl:'./app.component.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent, SportsManagementComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
   private authSessionState = inject(AuthSessionState);
@@ -31,20 +32,6 @@ export class AppComponent implements OnInit {
   mobileMenu = false;
   toast = '';
   search = '';
-  statusFilter = 'Todos';
-
-  /* ---------- Deportes (datos de demostración: el backend aún no tiene este módulo) ---------- */
-  selectedSport = 0;
-  modal = false;
-  editingSport = false;
-  sportForm: Sport = this.blankSport();
-  sports: Sport[] = [
-    {name:'Fútbol',category:'Balón',subs:['Fútbol 11','Fútbol de salón','Fútbol callejero','Fútbol playa','Fútbol 5'],status:'Activo',description:'Deporte de equipo jugado entre dos conjuntos de once jugadores cada uno.',teams:12,icon:'⚽'},
-    {name:'Baloncesto',category:'Balón',subs:['Baloncesto 5x5','Baloncesto 3x3'],status:'Activo',description:'Deporte de equipo en el que se busca introducir el balón en la canasta rival.',teams:8,icon:'🏀'},
-    {name:'Voleibol',category:'Red',subs:['Voleibol de sala','Voleibol playa','Voleibol sentado'],status:'Activo',description:'Deporte de equipo en el que dos conjuntos se enfrentan separados por una red.',teams:10,icon:'🏐'},
-    {name:'Tenis',category:'Raqueta',subs:['Tenis individual','Tenis dobles'],status:'Inactivo',description:'Deporte de raqueta que se disputa en una pista dividida por una red.',teams:4,icon:'🎾'},
-    {name:'Natación',category:'Acuático',subs:['Natación en piscina'],status:'Activo',description:'Disciplina acuática de velocidad, resistencia y técnica.',teams:6,icon:'🌊'}
-  ];
 
   /* ---------- Sesión ---------- */
   session: AuthResponse | null = null;
@@ -596,14 +583,4 @@ export class AppComponent implements OnInit {
     finally{ this.profileForm.currentPassword=''; this.saving=false; }
   }
 
-  /* ======================= Deportes (demostración) ======================= */
-  get filteredSports(){return this.sports.filter(s=>(s.name.toLowerCase().includes(this.search.toLowerCase())||s.category.toLowerCase().includes(this.search.toLowerCase()))&&(this.statusFilter==='Todos'||s.status===this.statusFilter));}
-  get currentSport(){return this.sports[this.selectedSport] ?? this.sports[0];}
-  blankSport():Sport{return {name:'',category:'',subs:[],status:'Activo',description:'',teams:0,icon:'🏅'};}
-  openNewSport(){this.sportForm=this.blankSport();this.editingSport=false;this.modal=true;}
-  openEditSport(s:Sport){this.sportForm={...s,subs:[...s.subs]};this.editingSport=true;this.modal=true;}
-  updateSubs(value:string){this.sportForm.subs=value.split(',').map(s=>s.trim()).filter(Boolean);}
-  saveSport(){if(!this.sportForm.name.trim()||!this.sportForm.category){this.showToast('Completa el nombre y la categoría del deporte.');return;}const duplicate=this.sports.some((s,i)=>s.name.toLowerCase()===this.sportForm.name.trim().toLowerCase()&&(!this.editingSport||i!==this.selectedSport));if(duplicate){this.showToast('Ya existe un deporte con ese nombre.');return;}if(this.editingSport)this.sports[this.selectedSport]={...this.sportForm};else{this.sports.push({...this.sportForm});this.selectedSport=this.sports.length-1;}this.modal=false;this.showToast('Deporte guardado correctamente.');}
-  deleteSport(index:number){const s=this.sports[index];if(s.teams>0){this.showToast(`No se puede eliminar «${s.name}» porque tiene equipos asociados.`);return;}if(confirm(`¿Eliminar el deporte ${s.name}?`)){this.sports.splice(index,1);this.selectedSport=0;this.showToast('Deporte eliminado.');}}
-  selectSport(s:Sport){this.selectedSport=this.sports.indexOf(s);}
 }
