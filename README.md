@@ -18,6 +18,41 @@ Al iniciar se crean únicamente los permisos faltantes del catálogo y los roles
 otorgan permisos automáticamente a ningún rol. Cada usuario registrado
 públicamente recibe el rol `Usuario`.
 
+### Preparar permisos de negocio (HU-GD-01 a HU-GD-03)
+
+El catalogo versionado de `BusinessPermissionsInitializer` contiene 14 permisos:
+5 de `Sport`, 5 de `Team` y 4 de `TeamSport`, con las rutas `/negocio` reales de
+NestJS y `PATCH` para las actualizaciones. Para registrarlos y agregarlos al
+Administrador, inicia **ms_security** una vez con la opcion explicita:
+
+```powershell
+cd backend/ms_security
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.arguments=--seed-business-permissions"
+```
+
+En Linux/macOS usa `./mvnw` con el mismo argumento. Tambien puedes pasar
+`--seed-business-permissions` al ejecutar el JAR ya compilado. Configura primero
+la conexion y el esquema de seguridad como en una ejecucion normal. No uses
+`--seed-business-permissions=false`: la opcion es una bandera sin valor.
+
+El inicializador se ejecuta despues de los datos base y del aprovisionamiento.
+Busca el rol por `AuthService.ADMIN_ROLE` (`Administrador`, sin distinguir
+mayusculas); no depende del ID 1. Reutiliza los permisos existentes por URL y
+metodo, agrega solo los registros y asociaciones faltantes y conserva todos los
+valores y asociaciones previos. No concede permisos a otros roles ni prepara
+cuentas, sesiones o datos deportivos. La operacion es transaccional y bloquea
+el rol durante la asignacion para serializar ejecuciones concurrentes.
+
+Puedes repetir el comando sin duplicar registros. Tras completar la preparacion,
+arranca normalmente sin la bandera: los arranques habituales no restauran
+concesiones revocadas. Ejecutar de nuevo la bandera vuelve a conceder cualquier
+permiso faltante de este conjunto de 14 al Administrador. No asigna los permisos
+administrativos `/api/...`; estos siguen gestionandose explicitamente.
+
+Este paso no sustituye las migraciones de `ms_negocio`. Los usuarios que deban
+utilizar estas historias necesitan estar asociados al rol Administrador mediante
+los mecanismos existentes; no se crea ningun usuario automaticamente.
+
 ### Aprovisionar el primer Administrador
 
 En una instalación nueva, ejecuta el backend una sola vez desde una terminal

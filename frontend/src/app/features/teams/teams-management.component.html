@@ -60,6 +60,7 @@
     <div class="detail-identity"><span class="detail-eyebrow" id="team-detail-title">DETALLE DEL EQUIPO</span><h2>{{team.name}}</h2><div class="detail-meta"><span>ID {{team.id}}</span><span class="team-status" [class.is-active]="team.active"><span aria-hidden="true"></span>{{team.active ? 'Activo' : 'Inactivo'}}</span></div></div>
     <div class="detail-description"><h3>Descripción</h3><p>{{team.description || 'Este equipo aún no tiene una descripción.'}}</p></div>
     <button type="button" class="refresh-button detail-edit" [disabled]="busy" (click)="showDetail(team, true)">Editar equipo</button>
+    <app-team-sports [team]="team" [teamBusy]="busy"></app-team-sports>
   </aside>
 </section>
 
