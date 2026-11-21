@@ -1,0 +1,81 @@
+<section class="teams-page" aria-labelledby="teams-title">
+  <header class="teams-header">
+    <div class="teams-heading">
+      <span class="eyebrow">GESTIÓN DEPORTIVA</span>
+      <h1 id="teams-title">Gestión de Equipos</h1>
+      <p>Organiza la información de tus equipos en un solo lugar.</p>
+    </div>
+    <button type="button" class="btn btn-primary new-team-button" [disabled]="busy || !loaded" (click)="openNew()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Nuevo equipo
+    </button>
+  </header>
+
+  <div class="teams-summary" aria-label="Resumen de equipos">
+    <div class="summary-item"><span class="summary-marker" aria-hidden="true"></span><span>Total de equipos</span><strong>{{loaded ? teams.length : '—'}}</strong></div>
+    <div class="summary-item"><span class="summary-marker is-active" aria-hidden="true"></span><span>Equipos activos</span><strong>{{loaded ? activeTeamsCount : '—'}}</strong></div>
+  </div>
+
+  <p *ngIf="message" class="notice success" role="status">{{message}}</p>
+  <div *ngIf="error" class="notice error" role="alert"><span>{{error}}</span><button type="button" class="notice-retry" [disabled]="busy" (click)="refresh()">Actualizar listado</button></div>
+
+  <div class="teams-catalog" [attr.aria-busy]="loading || saving">
+    <div class="teams-toolbar">
+      <div class="filter-field search-field">
+        <label for="team-search">Buscar equipo</label>
+        <div class="search-control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="team-search" type="search" [(ngModel)]="search" placeholder="Buscar por nombre" autocomplete="off"></div>
+      </div>
+      <div class="filter-field status-field"><label for="team-status">Estado</label><select id="team-status" [(ngModel)]="statusFilter"><option value="all">Todos los estados</option><option value="active">Activos</option><option value="inactive">Inactivos</option></select></div>
+      <button type="button" class="refresh-button" [disabled]="busy" (click)="refresh()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg>{{loading ? 'Cargando…' : 'Actualizar'}}</button>
+    </div>
+
+    <div class="catalog-heading"><h2>Equipos registrados <span class="catalog-count">{{loaded ? filteredTeams.length : '—'}}</span></h2><p>Selecciona un nombre para consultar su detalle.</p></div>
+    <p *ngIf="loading" class="operation-status" role="status">Cargando equipos…</p>
+    <p *ngIf="saving" class="operation-status" role="status">Procesando operación…</p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Listado de equipos">
+      <table class="teams-table">
+        <caption class="sr-only">Equipos registrados, descripción, estado y acciones disponibles</caption>
+        <colgroup><col class="col-name"><col class="col-description"><col class="col-status"><col class="col-actions"></colgroup>
+        <thead><tr><th scope="col">Equipo</th><th scope="col">Descripción</th><th scope="col">Estado</th><th scope="col" class="actions-heading">Acciones</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let team of filteredTeams; trackBy: trackId" [class.selected-row]="selected?.id === team.id">
+            <td class="name-cell"><div class="team-identity"><span class="team-monogram" aria-hidden="true">{{team.name.slice(0, 1).toLocaleUpperCase('es')}}</span><div><button type="button" class="team-link" [disabled]="busy" (click)="showDetail(team)" [attr.aria-label]="'Consultar detalle de ' + team.name + ', ID ' + team.id">{{team.name}}</button><small class="team-id">ID {{team.id}}</small></div></div></td>
+            <td class="description-cell" data-label="Descripción"><span class="description-preview" [class.no-description]="!team.description">{{team.description || 'Sin descripción'}}</span></td>
+            <td class="status-cell"><span class="team-status" [class.is-active]="team.active"><span aria-hidden="true"></span>{{team.active ? 'Activo' : 'Inactivo'}}</span></td>
+            <td class="actions-cell"><div class="team-actions">
+              <button type="button" class="row-action edit-action" [disabled]="busy" (click)="showDetail(team, true)" [attr.aria-label]="'Editar ' + team.name + ', ID ' + team.id"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></svg><span>Editar</span></button>
+              <button type="button" class="row-action state-action" [disabled]="busy" (click)="toggleActive(team)" [attr.aria-label]="(team.active ? 'Desactivar ' : 'Activar ') + team.name + ', ID ' + team.id"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3v9M7 5.5a8 8 0 1 0 10 0"/></svg><span>{{team.active ? 'Desactivar' : 'Activar'}}</span></button>
+              <button type="button" class="row-action delete-action" [disabled]="busy" (click)="remove(team)" [attr.aria-label]="'Eliminar ' + team.name + ', ID ' + team.id" [title]="'Eliminar ' + team.name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg><span class="delete-label">Eliminar</span></button>
+            </div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="teams-empty" *ngIf="!loading && loaded && !filteredTeams.length"><h3>{{teams.length ? 'No encontramos coincidencias' : 'Tu catálogo comienza aquí'}}</h3><p>{{teams.length ? 'Prueba con otro nombre o cambia el filtro de estado.' : 'Registra tu primer equipo para comenzar a organizar su información.'}}</p><button type="button" class="btn btn-outline" *ngIf="!teams.length" [disabled]="busy" (click)="openNew()">Registrar un equipo</button></div>
+    <footer class="catalog-footer" *ngIf="loaded"><span>{{filteredTeams.length}} de {{teams.length}} equipos</span><span class="catalog-hint">Información actualizada desde el catálogo</span></footer>
+  </div>
+
+  <p *ngIf="detailLoading" class="operation-status" role="status">Consultando detalle del equipo…</p>
+  <aside *ngIf="selected as team" class="team-detail" aria-labelledby="team-detail-title" [attr.aria-busy]="detailLoading">
+    <div class="detail-identity"><span class="detail-eyebrow" id="team-detail-title">DETALLE DEL EQUIPO</span><h2>{{team.name}}</h2><div class="detail-meta"><span>ID {{team.id}}</span><span class="team-status" [class.is-active]="team.active"><span aria-hidden="true"></span>{{team.active ? 'Activo' : 'Inactivo'}}</span></div></div>
+    <div class="detail-description"><h3>Descripción</h3><p>{{team.description || 'Este equipo aún no tiene una descripción.'}}</p></div>
+    <button type="button" class="refresh-button detail-edit" [disabled]="busy" (click)="showDetail(team, true)">Editar equipo</button>
+  </aside>
+</section>
+
+<dialog #editor class="modal-card teams-dialog" aria-labelledby="team-editor-title" (cancel)="cancelEditor($event)">
+  <form #teamForm="ngForm" (ngSubmit)="save()">
+    <div class="modal-heading"><div><span class="eyebrow">GESTIÓN DEPORTIVA</span><h2 id="team-editor-title">{{editing ? 'Editar equipo' : 'Nuevo equipo'}}</h2><p>{{editing ? 'Actualiza la información del equipo seleccionado.' : 'Completa los datos básicos para registrar un equipo.'}}</p></div><button type="button" class="close-button" [disabled]="saving" (click)="closeEditor()" aria-label="Cerrar formulario de equipo">×</button></div>
+    <div class="form-content">
+      <p class="notice error" *ngIf="formError" role="alert">{{formError}}</p>
+      <p class="editing-reference" *ngIf="editing">Editando equipo <strong>#{{editing.id}}</strong></p>
+      <fieldset class="team-form-fields" [disabled]="saving" aria-label="Información básica del equipo">
+        <div class="form-field"><label for="team-name">Nombre del equipo <span class="required-mark" aria-hidden="true">*</span><span class="sr-only">obligatorio</span></label><input id="team-name" name="name" [(ngModel)]="form.name" #name="ngModel" required maxlength="180" pattern=".*\S.*" autofocus placeholder="Nombre del equipo" aria-describedby="team-name-hint team-name-error" [attr.aria-invalid]="name.invalid && (name.touched || teamForm.submitted)"><div class="field-footer"><small id="team-name-hint">El ID distingue a los equipos con el mismo nombre.</small><small class="field-counter" aria-hidden="true">{{form.name.length}} / 180</small></div><span id="team-name-error" class="field-error" *ngIf="name.invalid && (name.touched || teamForm.submitted)">Escribe un nombre de hasta 180 caracteres que no contenga solo espacios.</span></div>
+        <div class="form-field"><label for="team-description">Descripción <span class="optional-label">Opcional</span></label><textarea id="team-description" name="description" [(ngModel)]="form.description" placeholder="Agrega una breve descripción del equipo" aria-describedby="team-description-hint" [attr.aria-invalid]="descriptionBytes > 65535"></textarea><small id="team-description-hint">Incluye información que ayude a identificar al equipo.</small><span class="field-error" *ngIf="descriptionBytes > 65535">La descripción es demasiado extensa. Reduce su contenido.</span></div>
+        <div class="form-field state-form-field" *ngIf="editing"><label for="team-active">Estado del equipo</label><select id="team-active" name="active" [(ngModel)]="form.active"><option [ngValue]="true">Activo</option><option [ngValue]="false">Inactivo</option></select><small>Puedes cambiar el estado sin eliminar el registro.</small></div>
+      </fieldset>
+      <p class="create-state-note" *ngIf="!editing"><span aria-hidden="true"></span>El equipo se registrará como activo.</p>
+    </div>
+    <div class="modal-actions"><button type="button" class="form-cancel" [disabled]="saving" (click)="closeEditor()">Cancelar</button><button class="btn btn-primary form-save" type="submit" [disabled]="saving || teamForm.invalid || !validFields">{{saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar equipo'}}</button></div>
+  </form>
+</dialog>
