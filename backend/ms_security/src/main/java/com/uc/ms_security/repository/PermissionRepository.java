@@ -4,10 +4,13 @@ import com.uc.ms_security.entity.Permission;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PermissionRepository extends JpaRepository<Permission, Long> {
 
     boolean existsByUrlAndMethod(String url, String method);
+
+    Optional<Permission> findByUrlAndMethod(String url, String method);
 
     boolean existsByUrlAndMethodAndIdNot(String url, String method, Long id);
 

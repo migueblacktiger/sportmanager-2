@@ -4,11 +4,12 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule, NgForm } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { CreateTeamRequest, TeamDto, TeamsApiService, UpdateTeamRequest } from './teams-api.service';
+import { TeamSportsComponent } from '../team-sports/team-sports.component';
 
 @Component({
   selector: 'app-teams-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TeamSportsComponent],
   templateUrl: './teams-management.component.html',
   styleUrl: './teams-management.component.css',
 })

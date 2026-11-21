@@ -1,0 +1,31 @@
+<section class="association-section" aria-labelledby="team-sports-title">
+  <header class="association-heading">
+    <div><h3 id="team-sports-title">Deportes del equipo <span class="association-count">{{associationsLoaded ? associations.length : '—'}}</span></h3><p>Disciplinas en las que participa {{team.name}}.</p></div>
+    <button type="button" class="association-refresh" [disabled]="busy" (click)="refresh()">Actualizar deportes</button>
+  </header>
+
+  <p *ngIf="message" class="association-notice success" role="status">{{message}}</p>
+  <p *ngIf="actionError" class="association-notice error" role="alert">{{actionError}}</p>
+  <div *ngIf="associationsError" class="association-notice error" role="alert"><span>No se pudieron consultar las asociaciones. {{associationsError}}</span><button type="button" [disabled]="busy" (click)="refresh()">Reintentar</button></div>
+  <p *ngIf="associationsLoading" class="association-feedback" role="status">Cargando deportes del equipo…</p>
+  <p *ngIf="saving" class="association-feedback" role="status">Procesando asociación…</p>
+
+  <div *ngIf="associationsLoaded" class="associated-content" [attr.aria-busy]="saving">
+    <ul class="associated-list" *ngIf="associations.length; else noAssociations">
+      <li *ngFor="let association of associations; trackBy: trackAssociation">
+        <div class="associated-identity"><span class="associated-marker" aria-hidden="true"></span><div><strong>{{association.sport.name}}</strong><small>Deporte #{{association.sportId}} · {{association.sport.active ? 'Activo' : 'Inactivo'}}</small></div></div>
+        <button type="button" class="remove-association" [disabled]="busy" (click)="removeAssociation(association)" [attr.aria-label]="'Retirar asociación de ' + association.sport.name + ' con ' + team.name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 12h14"/></svg>Retirar asociación</button>
+      </li>
+    </ul>
+    <ng-template #noAssociations><div class="association-empty"><p>Este equipo todavía no tiene deportes asociados.</p><small>Selecciona un deporte del catálogo para comenzar.</small></div></ng-template>
+  </div>
+
+  <form class="associate-form" (ngSubmit)="associate()" aria-label="Asociar deporte al equipo">
+    <div class="sport-selector"><label for="team-sport-select">Asociar otro deporte</label><select id="team-sport-select" name="sportId" [(ngModel)]="selectedSportId" required [disabled]="busy || !associationsLoaded || !catalogLoaded || !availableSports.length" aria-describedby="team-sport-hint"><option [ngValue]="null">Selecciona un deporte</option><option *ngFor="let sport of availableSports; trackBy: trackSport" [ngValue]="sport.id">{{sport.name}}{{sport.active ? '' : ' (inactivo)'}}</option></select><small id="team-sport-hint">Solo se muestran deportes que aún no están asociados al equipo.</small></div>
+    <button type="submit" class="btn btn-primary associate-submit" [disabled]="!canAssociate">Asociar deporte</button>
+  </form>
+  <p *ngIf="catalogLoading" class="association-feedback" role="status">Cargando catálogo de deportes…</p>
+  <div *ngIf="catalogError" class="association-notice error" role="alert"><span>No se pudo cargar el selector de deportes. {{catalogError}}</span><button type="button" [disabled]="busy" (click)="refresh()">Reintentar</button></div>
+  <p *ngIf="catalogLoaded && associationsLoaded && !sports.length" class="association-feedback">El catálogo todavía no tiene deportes registrados.</p>
+  <p *ngIf="catalogLoaded && associationsLoaded && sports.length && !availableSports.length" class="association-feedback">Todos los deportes del catálogo ya están asociados a este equipo.</p>
+</section>
