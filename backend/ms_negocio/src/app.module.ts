@@ -5,6 +5,7 @@ import { validateEnvironment } from './config/environment';
 import { CommonModule } from './common/common.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { SkillsModule } from './modules/skills/skills.module';
 import { SportsModule } from './modules/sports/sports.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { SportsModule } from './modules/sports/sports.module';
     DatabaseModule,
     CommonModule,
     SportsModule,
+    SkillsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

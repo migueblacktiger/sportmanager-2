@@ -1,7 +1,6 @@
-# Modulos de negocio pendientes
+# Modulos de negocio
 
-Todavia no se registran modulos deportivos. Cuando se disenen las historias,
-seguir el patron de ms_cinema por funcionalidad:
+Los modulos `sports` y `skills` siguen el patron de ms_cinema por funcionalidad:
 
 ```text
 <funcionalidad>/
@@ -15,7 +14,7 @@ seguir el patron de ms_cinema por funcionalidad:
 ```
 
 El module registra TypeOrmModule.forFeature, controller, service, repository y
-mapper cuando corresponda, como en el ejemplo. El controller delega en service;
-el mapper separa entidades y DTO. No declarar Public en operaciones deportivas.
-Registrar el modulo en AppModule y crear su migracion explicita solo cuando
-se apruebe el modelo. No agregar entidades ni CRUD como marcadores vacios.
+mapper. El controller delega en service; el service no consulta TypeORM; el
+repository encapsula persistencia y el mapper separa entidades y DTO. No declarar
+Public en operaciones de negocio. Registrar cada modulo en AppModule y crear su
+migracion explicita. No agregar entidades ni CRUD como marcadores vacios.
