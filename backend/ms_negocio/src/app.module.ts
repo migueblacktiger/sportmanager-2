@@ -6,6 +6,7 @@ import { CommonModule } from './common/common.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { SportsModule } from './modules/sports/sports.module';
+import { TeamsModule } from './modules/teams/teams.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { SportsModule } from './modules/sports/sports.module';
     DatabaseModule,
     CommonModule,
     SportsModule,
+    TeamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
