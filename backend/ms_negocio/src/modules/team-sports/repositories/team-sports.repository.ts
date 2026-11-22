@@ -4,6 +4,9 @@ import { DataSource } from 'typeorm';
 import { Team } from '../../teams/entities/team.entity';
 import { Sport } from '../../sports/entities/sport.entity';
 import { TeamSport } from '../entities/team-sport.entity';
+import { Tournament } from '../../tournaments/entities/tournament.entity';
+import { TournamentRegistration } from '../../tournament-registrations/entities/tournament-registration.entity';
+import { TeamSportHasTournamentRegistrationsError } from './team-sport.errors';
 
 @Injectable()
 export class TeamSportsRepository {
@@ -42,8 +45,25 @@ export class TeamSportsRepository {
   }
 
   async remove(teamId: number, sportId: number): Promise<boolean> {
-    // Only the association is deleted, never its team or sport.
-    const result = await this.dataSource.getRepository(TeamSport).delete({ teamId, sportId });
-    return (result.affected ?? 0) > 0;
+    return this.dataSource.transaction(async manager => {
+      const associations = manager.getRepository(TeamSport);
+      const association = await associations.findOne({
+        where: { teamId, sportId },
+        lock: { mode: 'pessimistic_write' },
+      });
+      if (!association) return false;
+
+      const dependentRegistration = await manager.getRepository(TournamentRegistration)
+        .createQueryBuilder('registration')
+        .innerJoin('registration.tournament', 'tournament')
+        .where('registration.teamId = :teamId', { teamId })
+        .andWhere('tournament.sportId = :sportId', { sportId })
+        .select('registration.id')
+        .getOne();
+      if (dependentRegistration) throw new TeamSportHasTournamentRegistrationsError();
+
+      const result = await associations.delete({ teamId, sportId });
+      return (result.affected ?? 0) > 0;
+    });
   }
 }

@@ -2,9 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, QueryFailedError } from 'typeorm';
 import { Sport } from '../../sports/entities/sport.entity';
+import { TournamentRegistration } from '../../tournament-registrations/entities/tournament-registration.entity';
 import { Tournament } from '../entities/tournament.entity';
 import {
   TournamentDeleteRestrictedError,
+  TournamentRecordDisappearedError,
+  TournamentSportChangeRestrictedError,
   TournamentSportReferenceError,
 } from './tournament-repository.errors';
 
@@ -28,7 +31,27 @@ export class TournamentsRepository {
 
   async save(tournament: Tournament): Promise<Tournament> {
     try {
-      return await this.dataSource.getRepository(Tournament).save(tournament);
+      return await this.dataSource.transaction(async manager => {
+        const tournaments = manager.getRepository(Tournament);
+        if (tournament.id === undefined || tournament.id === null) {
+          return tournaments.save(tournament);
+        }
+
+        const current = await tournaments.findOne({
+          where: { id: tournament.id },
+          lock: { mode: 'pessimistic_write' },
+        });
+        if (!current) throw new TournamentRecordDisappearedError(tournament.id);
+
+        if (current.sportId !== tournament.sportId) {
+          const registration = await manager.getRepository(TournamentRegistration).findOne({
+            select: { id: true },
+            where: { tournamentId: tournament.id },
+          });
+          if (registration) throw new TournamentSportChangeRestrictedError();
+        }
+        return tournaments.save(Object.assign(current, tournament));
+      });
     } catch (error: unknown) {
       if (this.hasDatabaseCode(error, 'ER_NO_REFERENCED_ROW_2', 'ER_NO_REFERENCED_ROW')) {
         throw new TournamentSportReferenceError();

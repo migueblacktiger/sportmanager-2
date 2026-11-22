@@ -2,11 +2,16 @@ import { validate } from 'class-validator';
 import { CreateTournamentDto } from './dto/create-tournament.dto';
 import { Tournament } from './entities/tournament.entity';
 import { TournamentMapper } from './mappers/tournament.mapper';
-import { TournamentDeleteRestrictedError, TournamentSportReferenceError } from './repositories/tournament-repository.errors';
+import {
+  TournamentDeleteRestrictedError,
+  TournamentSportChangeRestrictedError,
+  TournamentSportReferenceError,
+} from './repositories/tournament-repository.errors';
 import { TournamentsRepository } from './repositories/tournaments.repository';
 import {
   TournamentDatesInvalidError,
   TournamentHasDependenciesError,
+  TournamentHasRegistrationsError,
   TournamentNotFoundError,
   TournamentSportNotFoundError,
 } from './tournament.errors';
@@ -143,6 +148,15 @@ describe('TournamentsService', () => {
     await expect(service.update(8, {
       registrationStartsAt: '2027-01-13T10:00:00Z',
     })).rejects.toBeInstanceOf(TournamentDatesInvalidError);
+  });
+
+  it('rejects changing the sport after the tournament has registrations', async () => {
+    repository.findById.mockResolvedValue(tournament());
+    repository.findSportById.mockResolvedValue({ id: 5 });
+    repository.save.mockRejectedValue(new TournamentSportChangeRestrictedError());
+
+    await expect(service.update(8, { sportId: 5 }))
+      .rejects.toBeInstanceOf(TournamentHasRegistrationsError);
   });
 
   it('maps a concurrently removed sport to not found', async () => {

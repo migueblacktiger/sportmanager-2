@@ -25,3 +25,10 @@ export class TournamentHasDependenciesError extends Error {
     this.name = TournamentHasDependenciesError.name;
   }
 }
+
+export class TournamentHasRegistrationsError extends Error {
+  constructor(id: number) {
+    super(`No se puede cambiar el deporte del torneo ${id} mientras tenga equipos inscritos`);
+    this.name = TournamentHasRegistrationsError.name;
+  }
+}

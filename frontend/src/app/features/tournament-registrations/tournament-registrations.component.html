@@ -1,0 +1,128 @@
+<section class="registration-page" aria-labelledby="registration-page-title">
+  <header class="registration-header">
+    <div>
+      <span class="eyebrow">GESTIÓN DE COMPETENCIAS</span>
+      <h1 id="registration-page-title">Inscripciones</h1>
+      <p>Asocia equipos con torneos de su deporte y consulta sus participaciones.</p>
+    </div>
+    <button type="button" class="registration-refresh" [disabled]="busy" (click)="loadCatalogs()">
+      {{loadingCatalog ? 'Cargando…' : 'Actualizar datos'}}
+    </button>
+  </header>
+
+  <p *ngIf="success" class="registration-notice success" role="status">{{success}}</p>
+  <div *ngIf="error" class="registration-notice error" role="alert">
+    <span>{{error}}</span>
+    <button type="button" [disabled]="busy" (click)="loadCatalogs()">Reintentar</button>
+  </div>
+
+  <div *ngIf="loadingCatalog" class="registration-loading" role="status">Cargando torneos y equipos…</div>
+
+  <div class="registration-columns" [attr.aria-busy]="busy">
+    <section class="registration-card" aria-labelledby="enroll-title">
+      <header class="card-heading">
+        <div><span class="step-number">01</span><div><h2 id="enroll-title">Inscribir equipos</h2><p>El torneo y los equipos deben estar asociados al mismo deporte.</p></div></div>
+      </header>
+
+      <label class="registration-field">
+        <span>Torneo</span>
+        <select name="tournamentId" [(ngModel)]="tournamentId" (ngModelChange)="selectTournament()" [disabled]="busy || !catalogLoaded">
+          <option [ngValue]="null">Selecciona un torneo</option>
+          <option *ngFor="let tournament of tournaments; trackBy: trackTournament" [ngValue]="tournament.id">
+            {{tournament.name}} · {{tournament.registrationStartsAt | date:'mediumDate':'UTC'}}–{{tournament.registrationEndsAt | date:'mediumDate':'UTC'}} UTC
+          </option>
+        </select>
+      </label>
+
+      <ng-container *ngIf="selectedTournament as tournament">
+        <div class="tournament-status" [class.open]="registrationOpen" [class.closed]="!registrationOpen">
+          <span class="status-dot"></span>
+          <span>{{registrationState}}</span>
+          <small>Deporte #{{tournament.sportId}} · inicia {{tournament.startsAt | date:'medium':'UTC'}} UTC</small>
+        </div>
+
+        <div class="section-subheading">
+          <div><h3>Equipos disponibles <span>{{eligibleAssociations.length}}</span></h3><p>Solo equipos asociados a este deporte.</p></div>
+          <span class="selected-count" *ngIf="selectedTeamIds.length">{{selectedTeamIds.length}} seleccionados</span>
+        </div>
+        <label class="registration-field compact-field">
+          <span>Filtrar equipos</span>
+          <input type="search" [(ngModel)]="search" placeholder="Buscar por nombre">
+        </label>
+
+        <p *ngIf="loadingTournament" class="registration-loading" role="status">Cargando inscripciones y asociaciones…</p>
+        <div *ngIf="!loadingTournament && !eligibleAssociations.length" class="registration-empty">
+          <strong>{{sportAssociations.length ? 'No hay equipos disponibles' : 'No hay equipos asociados'}}</strong>
+          <span>{{sportAssociations.length ? 'Todos los equipos de este deporte ya están inscritos o no coinciden con la búsqueda.' : 'Asocia primero equipos con este deporte desde Equipo → Deportes.'}}</span>
+        </div>
+        <ul *ngIf="eligibleAssociations.length" class="candidate-list">
+          <li *ngFor="let association of eligibleAssociations; trackBy: trackAssociation">
+            <label>
+              <input type="checkbox" [checked]="selectedTeamIds.includes(association.teamId)"
+                [disabled]="busy || !registrationOpen"
+                (change)="toggleTeam(association.teamId, $event)">
+              <span class="candidate-check" aria-hidden="true"></span>
+              <span class="candidate-name">{{association.team.name}}<small>Equipo #{{association.teamId}}{{association.team.active ? '' : ' · inactivo'}}</small></span>
+            </label>
+            <span class="team-sport-tag">{{association.sport.name}}</span>
+          </li>
+        </ul>
+        <button type="button" class="btn btn-primary register-button"
+          [disabled]="busy || !registrationOpen || !selectedTeamIds.length"
+          (click)="registerSelected()">
+          {{saving ? 'Procesando…' : selectedTeamIds.length ? 'Inscribir ' + selectedTeamIds.length + ' equipo(s)' : 'Selecciona equipos'}}
+        </button>
+
+        <div class="section-subheading enrolled-heading">
+          <div><h3>Equipos inscritos <span>{{matchingTournamentRegistrations.length}}</span></h3><p>Los retiros se permiten hasta antes del inicio del torneo.</p></div>
+        </div>
+        <div *ngIf="!loadingTournament && !matchingTournamentRegistrations.length" class="registration-empty compact-empty">
+          <strong>Aún no hay equipos inscritos</strong>
+          <span>Los equipos registrados para este torneo aparecerán aquí.</span>
+        </div>
+        <ul *ngIf="matchingTournamentRegistrations.length" class="enrolled-list">
+          <li *ngFor="let registration of matchingTournamentRegistrations; trackBy: trackRegistration">
+            <div class="candidate-name">{{registration.teamName}}<small>Equipo #{{registration.teamId}}</small></div>
+            <button type="button" class="withdraw-button" [disabled]="busy || hasTournamentStarted(registration.tournamentId)"
+              (click)="withdraw(registration)">Retirar</button>
+          </li>
+        </ul>
+      </ng-container>
+      <div *ngIf="catalogLoaded && !tournaments.length" class="registration-empty">
+        <strong>No hay torneos disponibles</strong><span>Registra un torneo antes de gestionar sus inscripciones.</span>
+      </div>
+    </section>
+
+    <section class="registration-card" aria-labelledby="team-history-title">
+      <header class="card-heading">
+        <div><span class="step-number cyan-step">02</span><div><h2 id="team-history-title">Torneos por equipo</h2><p>Consulta las competencias a las que está inscrito un equipo.</p></div></div>
+      </header>
+      <label class="registration-field">
+        <span>Equipo</span>
+        <select name="teamId" [(ngModel)]="teamId" (ngModelChange)="selectTeam()" [disabled]="busy || !catalogLoaded">
+          <option [ngValue]="null">Selecciona un equipo</option>
+          <option *ngFor="let team of teams; trackBy: trackTeam" [ngValue]="team.id">{{team.name}}{{team.active ? '' : ' (inactivo)'}}</option>
+        </select>
+      </label>
+
+      <ng-container *ngIf="selectedTeam as team">
+        <div class="selected-team-banner"><span class="team-avatar">{{team.name.slice(0, 1).toUpperCase()}}</span><div><strong>{{team.name}}</strong><small>Equipo #{{team.id}}</small></div></div>
+        <p *ngIf="loadingTeam" class="registration-loading" role="status">Consultando torneos…</p>
+        <div *ngIf="!loadingTeam && !teamRegistrations.length" class="registration-empty">
+          <strong>Sin inscripciones</strong><span>Este equipo todavía no participa en torneos.</span>
+        </div>
+        <ul *ngIf="!loadingTeam && teamRegistrations.length" class="team-tournament-list">
+          <li *ngFor="let registration of teamRegistrations; trackBy: trackRegistration">
+            <span class="tournament-marker" aria-hidden="true">♜</span>
+            <div><strong>{{registration.tournamentName}}</strong><small>Deporte #{{registration.sportId}} · Torneo #{{registration.tournamentId}}</small></div>
+            <button type="button" class="withdraw-button" [disabled]="busy || tournamentHasStarted"
+              (click)="withdraw(registration)">Retirar</button>
+          </li>
+        </ul>
+      </ng-container>
+      <div *ngIf="catalogLoaded && !teams.length" class="registration-empty">
+        <strong>No hay equipos registrados</strong><span>Registra un equipo antes de consultar sus torneos.</span>
+      </div>
+    </section>
+  </div>
+</section>
