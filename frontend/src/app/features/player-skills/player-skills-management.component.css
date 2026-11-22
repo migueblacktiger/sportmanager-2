@@ -1,0 +1,51 @@
+:host{display:block;min-width:0}
+.player-skills-page{--association-border:#263b50;color:var(--text)}
+.player-skills-header{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px}
+.player-skills-header h1{margin:8px 0;font-size:clamp(25px,2.4vw,32px);letter-spacing:-.9px}
+.player-skills-header p{margin:0;color:#9cacc0;font-size:13px;line-height:1.6}
+.player-skills-refresh{min-height:40px;padding:10px 14px;border:1px solid #30475b;border-radius:7px;background:#102133;color:#cedae6;font-size:11px}
+.player-skills-refresh:hover:not(:disabled){background:#152c41;border-color:#47728a}
+.player-skills-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:18px}
+.player-skills-card{min-width:0;overflow:hidden;padding:22px;border:1px solid var(--association-border);border-radius:12px;background:#0a1726}
+.player-skills-card-heading{display:flex;align-items:center;gap:13px;margin-bottom:21px}
+.player-skills-card-heading h2{margin:0 0 5px;font-size:15px}
+.player-skills-card-heading p{margin:0;color:#92a7bb;font-size:10px;line-height:1.6}
+.step-badge{display:grid;flex:0 0 34px;width:34px;height:34px;place-items:center;border:1px solid #34778a;border-radius:9px;background:#0c2836;color:#70c8d6;font-size:11px;font-weight:700}
+.purple-badge{border-color:#555283;background:#201e39;color:#b8b3ef}
+.player-skills-field{display:grid;gap:8px;margin-bottom:15px;color:#bfccda;font-size:11px;font-weight:600}
+.player-skills-field select{width:100%;min-height:43px;padding:11px 13px;border:1px solid #30485d;border-radius:7px;background:#071321;color:#e5eef6;font-size:12px}
+.player-skills-field option{background:#071321;color:#e5eef6}
+.player-summary,.skill-summary{display:flex;align-items:center;gap:11px;margin:17px 0;padding:13px;border:1px solid #243b50;border-radius:8px;background:#0c1e2e}
+.player-avatar,.skill-summary-icon{display:grid;flex:0 0 36px;width:36px;height:36px;place-items:center;border:1px solid #357488;border-radius:50%;background:#0d2b37;color:#9be0e9;font-size:14px;font-weight:700}
+.skill-summary-icon{border-color:#555283;border-radius:9px;background:#201e39;color:#c1baf1;font-size:18px}
+.player-summary div,.skill-summary div,.associated-players-list li div{display:grid;min-width:0;gap:5px}
+.player-summary strong,.skill-summary strong,.associated-players-list strong{color:#e1eaf2;font-size:11px;overflow-wrap:anywhere}
+.player-summary small,.skill-summary small,.associated-players-list small{color:#92a7bb;font-size:9px;overflow-wrap:anywhere}
+.player-skills-subheading{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:18px 0 12px}
+.player-skills-subheading h3{margin:0 0 4px;font-size:12px}
+.player-skills-subheading h3 span{margin-left:5px;padding:2px 6px;border:1px solid #2c4357;border-radius:5px;color:#b6c8d9;background:#102235;font-size:9px}
+.player-skills-subheading p{margin:0;color:#8da3b8;font-size:9px}
+.player-skills-list,.associated-players-list{display:grid;gap:7px;margin:0;padding:0;list-style:none}
+.player-skills-list li,.associated-players-list li{display:flex;align-items:center;gap:10px;min-width:0;padding:10px 11px;border:1px solid #21374b;border-radius:7px;background:#0b1c2b}
+.skill-icon{display:grid;flex:0 0 28px;width:28px;height:28px;place-items:center;border:1px solid #2b5364;border-radius:7px;background:#102a38;color:#8ed6e0}
+.skill-info{display:grid;flex:1;min-width:0;gap:4px}
+.skill-info strong{color:#e0e9f1;font-size:10px}
+.skill-info small{color:#91a7bb;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.remove-skill{flex:0 0 auto;padding:7px 9px;border:1px solid #5b3540;border-radius:6px;background:#261a24;color:#e8a4b0;font-size:9px}
+.remove-skill:hover:not(:disabled){border-color:#9c4a59;background:#351d29}
+.assign-form{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid #21364a}
+.assign-form .player-skills-field{margin:0}
+.assign-button{min-height:43px;white-space:nowrap}
+.player-skills-empty{display:grid;gap:5px;padding:19px 14px;border:1px dashed #344a5e;border-radius:8px;background:#0b1a28;text-align:center}
+.player-skills-empty strong{color:#cfdae5;font-size:11px}
+.player-skills-empty span,.catalog-hint{color:#91a7bb;font-size:9px;line-height:1.6}
+.catalog-hint{margin:11px 0 0}
+.associated-players-list li{padding:9px 11px}
+.small-avatar{flex-basis:30px;width:30px;height:30px;font-size:11px}
+.player-skills-loading{margin:10px 0;padding:10px;color:#9fc4d2;font-size:10px}
+.player-skills-notice{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 15px;margin:0 0 16px;border:1px solid;border-radius:8px;font-size:11px;line-height:1.6}
+.player-skills-notice.success{border-color:#27784e;background:#0d2b23;color:#b4ecc7}
+.player-skills-notice.error{border-color:#8b3039;background:#28121d;color:#ffbcc5}
+.player-skills-notice button{border:0;border-bottom:1px solid currentColor;background:transparent;color:inherit}
+@media(max-width:850px){.player-skills-grid{grid-template-columns:1fr}}
+@media(max-width:600px){.player-skills-header{align-items:flex-start;flex-direction:column}.player-skills-header>.player-skills-refresh{width:100%}.player-skills-card{padding:16px}.assign-form{grid-template-columns:1fr}.assign-button{width:100%}}
