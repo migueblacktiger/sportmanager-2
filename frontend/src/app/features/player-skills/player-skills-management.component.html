@@ -1,0 +1,124 @@
+<section class="player-skills-page" aria-labelledby="player-skills-title">
+  <header class="player-skills-header">
+    <div>
+      <span class="eyebrow">GESTIÓN DEPORTIVA</span>
+      <h1 id="player-skills-title">Habilidades de jugadores</h1>
+      <p>Asigna habilidades y consulta los jugadores asociados, sin modificar los catálogos.</p>
+    </div>
+    <button type="button" class="player-skills-refresh" [disabled]="busy" (click)="loadCatalogs()">
+      {{loadingCatalog ? 'Cargando…' : 'Actualizar catálogos'}}
+    </button>
+  </header>
+
+  <p *ngIf="success" class="player-skills-notice success" role="status">{{success}}</p>
+  <div *ngIf="error" class="player-skills-notice error" role="alert">
+    <span>{{error}}</span>
+    <button type="button" [disabled]="busy" (click)="loadCatalogs()">Reintentar</button>
+  </div>
+  <p *ngIf="loadingCatalog" class="player-skills-loading" role="status">Cargando jugadores y habilidades…</p>
+
+  <div class="player-skills-grid" [attr.aria-busy]="busy">
+    <section class="player-skills-card" aria-labelledby="player-assign-title">
+      <header class="player-skills-card-heading">
+        <span class="step-badge">01</span>
+        <div><h2 id="player-assign-title">Habilidades por jugador</h2><p>Consulta, asigna o retira habilidades.</p></div>
+      </header>
+
+      <label class="player-skills-field">
+        <span>Jugador</span>
+        <select name="playerId" [(ngModel)]="playerId" (ngModelChange)="selectPlayer()" [disabled]="busy || !players.length">
+          <option [ngValue]="null">Selecciona un jugador</option>
+          <option *ngFor="let player of players; trackBy: trackPlayer" [ngValue]="player.id">
+            {{player.name}}{{player.active ? '' : ' (inactivo)'}}
+          </option>
+        </select>
+      </label>
+
+      <ng-container *ngIf="selectedPlayer as player">
+        <div class="player-summary">
+          <span class="player-avatar">{{player.name.slice(0, 1).toUpperCase()}}</span>
+          <div><strong>{{player.name}}</strong><small>Jugador #{{player.id}} · {{player.active ? 'Activo' : 'Inactivo'}}</small></div>
+        </div>
+
+        <div class="player-skills-subheading">
+          <div><h3>Habilidades asignadas <span>{{playerSkills.length}}</span></h3><p>Relaciones actuales de este jugador.</p></div>
+        </div>
+        <p *ngIf="loadingPlayerSkills" class="player-skills-loading" role="status">Consultando habilidades…</p>
+        <div *ngIf="!loadingPlayerSkills && !playerSkills.length" class="player-skills-empty">
+          <strong>Sin habilidades asignadas</strong><span>Selecciona una habilidad del catálogo para asignarla.</span>
+        </div>
+        <ul *ngIf="playerSkills.length" class="player-skills-list">
+          <li *ngFor="let association of playerSkills; trackBy: trackAssociation">
+            <span class="skill-icon" aria-hidden="true">✦</span>
+            <div class="skill-info"><strong>{{association.skill.name}}</strong><small>{{association.skill.description || 'Sin descripción'}}</small></div>
+            <button type="button" class="remove-skill" [disabled]="busy"
+              [attr.aria-label]="'Retirar ' + association.skill.name + ' de ' + player.name"
+              (click)="removeAssociation(association)">Retirar</button>
+          </li>
+        </ul>
+
+        <form class="assign-form" (ngSubmit)="assignSkill()">
+          <label class="player-skills-field">
+            <span>Asignar habilidad existente</span>
+            <select name="assignmentSkillId" [(ngModel)]="assignmentSkillId"
+              [disabled]="busy || !availableSkills.length" required>
+              <option [ngValue]="null">Selecciona una habilidad</option>
+              <option *ngFor="let skill of availableSkills; trackBy: trackSkill" [ngValue]="skill.id">
+                {{skill.name}}
+              </option>
+            </select>
+          </label>
+          <button type="submit" class="btn btn-primary assign-button"
+            [disabled]="busy || assignmentSkillId === null">
+            {{assigning ? 'Asignando…' : '＋ Asignar habilidad'}}
+          </button>
+        </form>
+        <p *ngIf="!availableSkills.length" class="catalog-hint">No hay más habilidades disponibles para este jugador.</p>
+      </ng-container>
+      <div *ngIf="!loadingCatalog && !players.length" class="player-skills-empty">
+        <strong>No hay jugadores registrados</strong><span>Registra un jugador antes de asignar habilidades.</span>
+      </div>
+      <div *ngIf="!loadingCatalog && players.length && !skills.length" class="player-skills-empty">
+        <strong>No hay habilidades registradas</strong><span>El catálogo de habilidades todavía está vacío.</span>
+      </div>
+    </section>
+
+    <section class="player-skills-card" aria-labelledby="skill-players-title">
+      <header class="player-skills-card-heading">
+        <span class="step-badge purple-badge">02</span>
+        <div><h2 id="skill-players-title">Jugadores por habilidad</h2><p>Consulta todos los jugadores asociados a una habilidad.</p></div>
+      </header>
+
+      <label class="player-skills-field">
+        <span>Habilidad</span>
+        <select name="skillId" [(ngModel)]="skillId" (ngModelChange)="selectSkill()" [disabled]="busy || !skills.length">
+          <option [ngValue]="null">Selecciona una habilidad</option>
+          <option *ngFor="let skill of skills; trackBy: trackSkill" [ngValue]="skill.id">{{skill.name}}</option>
+        </select>
+      </label>
+
+      <ng-container *ngIf="selectedSkill as skill">
+        <div class="skill-summary">
+          <span class="skill-summary-icon" aria-hidden="true">✦</span>
+          <div><strong>{{skill.name}}</strong><small>{{skill.description || 'Sin descripción'}}</small></div>
+        </div>
+        <div class="player-skills-subheading">
+          <div><h3>Jugadores asociados <span>{{skillPlayers.length}}</span></h3><p>Consulta inversa de esta habilidad.</p></div>
+        </div>
+        <p *ngIf="loadingSkillPlayers" class="player-skills-loading" role="status">Consultando jugadores…</p>
+        <div *ngIf="!loadingSkillPlayers && !skillPlayers.length" class="player-skills-empty">
+          <strong>Sin jugadores asociados</strong><span>Esta habilidad aún no ha sido asignada.</span>
+        </div>
+        <ul *ngIf="skillPlayers.length" class="associated-players-list">
+          <li *ngFor="let player of skillPlayers; trackBy: trackPlayer">
+            <span class="player-avatar small-avatar">{{player.name.slice(0, 1).toUpperCase()}}</span>
+            <div><strong>{{player.name}}</strong><small>Jugador #{{player.id}} · {{player.active ? 'Activo' : 'Inactivo'}}</small></div>
+          </li>
+        </ul>
+      </ng-container>
+      <div *ngIf="!loadingCatalog && !skills.length" class="player-skills-empty">
+        <strong>No hay habilidades registradas</strong><span>El catálogo de habilidades todavía está vacío.</span>
+      </div>
+    </section>
+  </div>
+</section>
