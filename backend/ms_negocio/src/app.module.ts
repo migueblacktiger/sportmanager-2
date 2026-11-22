@@ -9,6 +9,7 @@ import { SkillsModule } from './modules/skills/skills.module';
 import { SportsModule } from './modules/sports/sports.module';
 import { TeamsModule } from './modules/teams/teams.module';
 import { TeamSportsModule } from './modules/team-sports/team-sports.module';
+import { PlayersModule } from './modules/players/players.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { TeamSportsModule } from './modules/team-sports/team-sports.module';
     SkillsModule,
     TeamsModule,
     TeamSportsModule,
+    PlayersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -18,10 +18,10 @@ Al iniciar se crean únicamente los permisos faltantes del catálogo y los roles
 otorgan permisos automáticamente a ningún rol. Cada usuario registrado
 públicamente recibe el rol `Usuario`.
 
-### Preparar permisos de negocio (HU-GD-01 a HU-GD-03)
+### Preparar permisos de negocio (HU-GD-01 a HU-GD-04)
 
-El catalogo versionado de `BusinessPermissionsInitializer` contiene 14 permisos:
-5 de `Sport`, 5 de `Team` y 4 de `TeamSport`, con las rutas `/negocio` reales de
+El catalogo versionado de `BusinessPermissionsInitializer` contiene 19 permisos:
+5 de `Sport`, 5 de `Team`, 4 de `TeamSport` y 5 de `Player`, con las rutas `/negocio` reales de
 NestJS y `PATCH` para las actualizaciones. Para registrarlos y agregarlos al
 Administrador, inicia **ms_security** una vez con la opcion explicita:
 
@@ -46,12 +46,19 @@ el rol durante la asignacion para serializar ejecuciones concurrentes.
 Puedes repetir el comando sin duplicar registros. Tras completar la preparacion,
 arranca normalmente sin la bandera: los arranques habituales no restauran
 concesiones revocadas. Ejecutar de nuevo la bandera vuelve a conceder cualquier
-permiso faltante de este conjunto de 14 al Administrador. No asigna los permisos
+permiso faltante de este conjunto de 19 al Administrador. No asigna los permisos
 administrativos `/api/...`; estos siguen gestionandose explicitamente.
 
 Este paso no sustituye las migraciones de `ms_negocio`. Los usuarios que deban
 utilizar estas historias necesitan estar asociados al rol Administrador mediante
 los mecanismos existentes; no se crea ningun usuario automaticamente.
+
+Los permisos de `Player` son POST y GET `/negocio/players`, y GET, PATCH y DELETE
+`/negocio/players/{id}`. Para agregar solo los permisos de una historia a una
+instalacion existente, utiliza los endpoints administrativos de permisos y
+asociaciones. No ejecutes este inicializador completo si necesitas conservar
+revocaciones de otros permisos de negocio: la bandera restaura cualquier
+asociacion faltante de los 19 permisos del catalogo.
 
 ### Aprovisionar el primer Administrador
 
