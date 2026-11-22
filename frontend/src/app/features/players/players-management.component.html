@@ -1,0 +1,82 @@
+<section class="players-page" aria-labelledby="players-title">
+  <header class="players-header">
+    <div class="players-heading">
+      <span class="eyebrow">GESTIÓN DEPORTIVA</span>
+      <h1 id="players-title">Gestión de Jugadores</h1>
+      <p>Organiza la información de tus jugadores en un solo lugar.</p>
+    </div>
+    <button type="button" class="btn btn-primary new-player-button" [disabled]="busy || !loaded" (click)="openNew()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Nuevo jugador
+    </button>
+  </header>
+
+  <div class="players-summary" aria-label="Resumen de jugadores">
+    <div class="summary-item"><span class="summary-marker" aria-hidden="true"></span><span>Total de jugadores</span><strong>{{loaded ? players.length : '—'}}</strong></div>
+    <div class="summary-item"><span class="summary-marker is-active" aria-hidden="true"></span><span>Jugadores activos</span><strong>{{loaded ? activePlayersCount : '—'}}</strong></div>
+  </div>
+
+  <p *ngIf="message" class="notice success" role="status">{{message}}</p>
+  <div *ngIf="error" class="notice error" role="alert"><span>{{error}}</span><button type="button" class="notice-retry" [disabled]="busy" (click)="refresh()">Actualizar listado</button></div>
+
+  <div class="players-catalog" [attr.aria-busy]="loading || saving">
+    <div class="players-toolbar">
+      <div class="filter-field search-field">
+        <label for="player-search">Buscar jugador</label>
+        <div class="search-control"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="player-search" type="search" [(ngModel)]="search" placeholder="Buscar por nombre o identificación" autocomplete="off"></div>
+      </div>
+      <div class="filter-field status-field"><label for="player-status">Estado</label><select id="player-status" [(ngModel)]="statusFilter"><option value="all">Todos los estados</option><option value="active">Activos</option><option value="inactive">Inactivos</option></select></div>
+      <button type="button" class="refresh-button" [disabled]="busy" (click)="refresh()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 8a7 7 0 0 1 12-2l2 3M4 15l2 3a7 7 0 0 0 12-2"/></svg>{{loading ? 'Cargando…' : 'Actualizar'}}</button>
+    </div>
+
+    <div class="catalog-heading"><h2>Jugadores registrados <span class="catalog-count">{{loaded ? filteredPlayers.length : '—'}}</span></h2><p>Selecciona un nombre para consultar su detalle.</p></div>
+    <p *ngIf="loading" class="operation-status" role="status">Cargando jugadores…</p>
+    <p *ngIf="saving" class="operation-status" role="status">Procesando operación…</p>
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Listado de jugadores">
+      <table class="players-table">
+        <caption class="sr-only">Jugadores registrados, identificación, descripción, estado y acciones disponibles</caption>
+        <colgroup><col class="col-name"><col class="col-description"><col class="col-status"><col class="col-actions"></colgroup>
+        <thead><tr><th scope="col">Jugador</th><th scope="col">Descripción</th><th scope="col">Estado</th><th scope="col" class="actions-heading">Acciones</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let player of filteredPlayers; trackBy: trackId" [class.selected-row]="selected?.id === player.id">
+            <td class="name-cell"><div class="player-identity"><span class="player-monogram" aria-hidden="true">{{player.name.slice(0, 1).toLocaleUpperCase('es')}}</span><div><button type="button" class="player-link" [disabled]="busy" (click)="showDetail(player)" [attr.aria-label]="'Consultar detalle de ' + player.name + ', ID ' + player.id">{{player.name}}</button><small class="player-id">{{player.identification ? 'Identificación: ' + player.identification : 'Sin identificación'}}</small><small class="player-id">ID {{player.id}}</small></div></div></td>
+            <td class="description-cell" data-label="Descripción"><span class="description-preview" [class.no-description]="!player.description">{{player.description || 'Sin descripción'}}</span></td>
+            <td class="status-cell"><span class="player-status" [class.is-active]="player.active"><span aria-hidden="true"></span>{{player.active ? 'Activo' : 'Inactivo'}}</span></td>
+            <td class="actions-cell"><div class="player-actions">
+              <button type="button" class="row-action edit-action" [disabled]="busy" (click)="showDetail(player, true)" [attr.aria-label]="'Editar ' + player.name + ', ID ' + player.id"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></svg><span>Editar</span></button>
+              <button type="button" class="row-action state-action" [disabled]="busy" (click)="toggleActive(player)" [attr.aria-label]="(player.active ? 'Desactivar ' : 'Activar ') + player.name + ', ID ' + player.id"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3v9M7 5.5a8 8 0 1 0 10 0"/></svg><span>{{player.active ? 'Desactivar' : 'Activar'}}</span></button>
+              <button type="button" class="row-action delete-action" [disabled]="busy" (click)="remove(player)" [attr.aria-label]="'Eliminar ' + player.name + ', ID ' + player.id" [title]="'Eliminar ' + player.name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7"/></svg><span class="delete-label">Eliminar</span></button>
+            </div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="players-empty" *ngIf="!loading && loaded && !filteredPlayers.length"><h3>{{players.length ? 'No encontramos coincidencias' : 'Tu catálogo comienza aquí'}}</h3><p>{{players.length ? 'Prueba con otro nombre, identificación o estado.' : 'Registra tu primer jugador para comenzar a organizar su información.'}}</p><button type="button" class="btn btn-outline" *ngIf="!players.length" [disabled]="busy" (click)="openNew()">Registrar un jugador</button></div>
+    <footer class="catalog-footer" *ngIf="loaded"><span>{{filteredPlayers.length}} de {{players.length}} jugadores</span><span class="catalog-hint">Información actualizada desde el catálogo</span></footer>
+  </div>
+
+  <p *ngIf="detailLoading" class="operation-status" role="status">Consultando detalle del jugador…</p>
+  <aside *ngIf="selected as player" class="player-detail" aria-labelledby="player-detail-title" [attr.aria-busy]="detailLoading">
+    <div class="detail-identity"><span class="detail-eyebrow" id="player-detail-title">DETALLE DEL JUGADOR</span><h2>{{player.name}}</h2><div class="detail-meta"><span>ID {{player.id}}</span><span class="player-status" [class.is-active]="player.active"><span aria-hidden="true"></span>{{player.active ? 'Activo' : 'Inactivo'}}</span></div></div>
+    <div class="detail-description"><h3>Identificación</h3><p class="identification-value">{{player.identification || 'Sin identificación registrada'}}</p><h3>Descripción</h3><p>{{player.description || 'Este jugador aún no tiene una descripción.'}}</p></div>
+    <button type="button" class="refresh-button detail-edit" [disabled]="busy" (click)="showDetail(player, true)">Editar jugador</button>
+  </aside>
+</section>
+
+<dialog #editor class="modal-card players-dialog" aria-labelledby="player-editor-title" (cancel)="cancelEditor($event)">
+  <form #playerForm="ngForm" (ngSubmit)="save()">
+    <div class="modal-heading"><div><span class="eyebrow">GESTIÓN DEPORTIVA</span><h2 id="player-editor-title">{{editing ? 'Editar jugador' : 'Nuevo jugador'}}</h2><p>{{editing ? 'Actualiza la información del jugador seleccionado.' : 'Completa los datos básicos para registrar un jugador.'}}</p></div><button type="button" class="close-button" [disabled]="saving" (click)="closeEditor()" aria-label="Cerrar formulario de jugador">×</button></div>
+    <div class="form-content">
+      <p class="notice error" *ngIf="formError" role="alert">{{formError}}</p>
+      <p class="editing-reference" *ngIf="editing">Editando jugador <strong>#{{editing.id}}</strong></p>
+      <fieldset class="player-form-fields" [disabled]="saving" aria-label="Información básica del jugador">
+        <div class="form-field"><label for="player-name">Nombre del jugador <span class="required-mark" aria-hidden="true">*</span><span class="sr-only">obligatorio</span></label><input id="player-name" name="name" [(ngModel)]="form.name" #name="ngModel" required maxlength="180" pattern=".*\S.*" autofocus placeholder="Nombre del jugador" aria-describedby="player-name-hint player-name-error" [attr.aria-invalid]="name.invalid && (name.touched || playerForm.submitted)"><div class="field-footer"><small id="player-name-hint">El ID distingue a los jugadores con el mismo nombre.</small><small class="field-counter" aria-hidden="true">{{form.name.length}} / 180</small></div><span id="player-name-error" class="field-error" *ngIf="name.invalid && (name.touched || playerForm.submitted)">Escribe un nombre de hasta 180 caracteres que no contenga solo espacios.</span></div>
+        <div class="form-field"><label for="player-identification">Identificación <span class="optional-label">Opcional</span></label><input id="player-identification" name="identification" [(ngModel)]="form.identification" #identification="ngModel" maxlength="80" pattern=".*\S.*" placeholder="Identificador del jugador" aria-describedby="player-identification-hint player-identification-error" [attr.aria-invalid]="identification.invalid && (identification.touched || playerForm.submitted)"><div class="field-footer"><small id="player-identification-hint">Si la proporcionas, debe ser única. Puedes dejarla vacía.</small><small class="field-counter" aria-hidden="true">{{form.identification.length}} / 80</small></div><span id="player-identification-error" class="field-error" *ngIf="identification.invalid && (identification.touched || playerForm.submitted)">Escribe hasta 80 caracteres; no uses solo espacios.</span></div>
+        <div class="form-field"><label for="player-description">Descripción <span class="optional-label">Opcional</span></label><textarea id="player-description" name="description" [(ngModel)]="form.description" placeholder="Agrega una breve descripción del jugador" aria-describedby="player-description-hint" [attr.aria-invalid]="descriptionBytes > 65535"></textarea><small id="player-description-hint">Incluye información que ayude a identificar al jugador.</small><span class="field-error" *ngIf="descriptionBytes > 65535">La descripción es demasiado extensa. Reduce su contenido.</span></div>
+        <div class="form-field state-form-field" *ngIf="editing"><label for="player-active">Estado del jugador</label><select id="player-active" name="active" [(ngModel)]="form.active"><option [ngValue]="true">Activo</option><option [ngValue]="false">Inactivo</option></select><small>Puedes cambiar el estado sin eliminar el registro.</small></div>
+      </fieldset>
+      <p class="create-state-note" *ngIf="!editing"><span aria-hidden="true"></span>El jugador se registrará como activo.</p>
+    </div>
+    <div class="modal-actions"><button type="button" class="form-cancel" [disabled]="saving" (click)="closeEditor()">Cancelar</button><button class="btn btn-primary form-save" type="submit" [disabled]="saving || playerForm.invalid || !validFields">{{saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar jugador'}}</button></div>
+  </form>
+</dialog>
