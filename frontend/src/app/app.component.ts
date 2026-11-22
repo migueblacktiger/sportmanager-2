@@ -18,12 +18,13 @@ import { TournamentsManagementComponent } from './features/tournaments/tournamen
 import { TournamentRegistrationsComponent } from './features/tournament-registrations/tournament-registrations.component';
 import { PlayersManagementComponent } from './features/players/players-management.component';
 import { PlayerSkillsManagementComponent } from './features/player-skills/player-skills-management.component';
+import { PlayerSportsProfileComponent } from './features/player-profile/player-sports-profile.component';
 
-type Page = 'home'|'login'|'register'|'forgot'|'reset-password'|'verify-email'|'two-factor'|'security-settings'|'dashboard'|'sports'|'teams'|'tournaments'|'registrations'|'players'|'player-skills'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
+type Page = 'home'|'login'|'register'|'forgot'|'reset-password'|'verify-email'|'two-factor'|'security-settings'|'dashboard'|'sports'|'teams'|'tournaments'|'registrations'|'players'|'player-skills'|'player-sports-profile'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
 const PUBLIC_PAGES: Page[] = ['home','login','register','forgot','reset-password','verify-email','two-factor'];
 const ADMIN_PAGES: Page[] = ['users','roles','permissions','role-permissions'];
 const ADMIN_ROLE = 'administrador';
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent, SportsManagementComponent, TeamsManagementComponent, TournamentsManagementComponent, TournamentRegistrationsComponent, PlayersManagementComponent, PlayerSkillsManagementComponent], templateUrl:'./app.component.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent, SportsManagementComponent, TeamsManagementComponent, TournamentsManagementComponent, TournamentRegistrationsComponent, PlayersManagementComponent, PlayerSkillsManagementComponent, PlayerSportsProfileComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
   private authSessionState = inject(AuthSessionState);

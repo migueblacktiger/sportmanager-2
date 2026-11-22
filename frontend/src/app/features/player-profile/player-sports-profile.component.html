@@ -1,0 +1,104 @@
+<section class="sports-profile-page" aria-labelledby="sports-profile-title">
+  <header class="sports-profile-header">
+    <div>
+      <span class="eyebrow">GESTIÓN DEPORTIVA</span>
+      <h1 id="sports-profile-title">Perfil deportivo del jugador</h1>
+      <p>Consulta los datos y las habilidades registradas para un jugador.</p>
+    </div>
+    <button type="button" class="profile-refresh" [disabled]="busy" (click)="loadPlayers()">
+      {{catalogLoading ? 'Cargando…' : 'Actualizar jugadores'}}
+    </button>
+  </header>
+
+  <div *ngIf="catalogError" class="profile-notice error" role="alert">
+    <span>{{catalogError}}</span>
+    <button type="button" [disabled]="busy" (click)="loadPlayers()">Reintentar</button>
+  </div>
+  <p *ngIf="catalogLoading" class="profile-loading" role="status">Cargando jugadores…</p>
+
+  <section class="profile-selector-card" aria-label="Seleccionar jugador">
+    <label class="profile-field">
+      <span>Jugador</span>
+      <select name="playerId" [(ngModel)]="selectedPlayerId" (ngModelChange)="selectPlayer()"
+        [disabled]="busy || !catalogLoaded">
+        <option [ngValue]="null">Selecciona un jugador</option>
+        <option *ngFor="let player of players; trackBy: trackPlayer" [ngValue]="player.id">
+          {{player.name}}{{player.active ? '' : ' (inactivo)'}}
+        </option>
+      </select>
+    </label>
+    <p *ngIf="!catalogLoading && catalogLoaded && !players.length" class="profile-empty compact-empty">
+      No hay jugadores registrados para consultar.
+    </p>
+  </section>
+
+  <p *ngIf="playerError" class="profile-notice error" role="alert">{{playerError}}</p>
+  <p *ngIf="playerLoading" class="profile-loading" role="status">Consultando datos del jugador…</p>
+
+  <ng-container *ngIf="selectedPlayer as player">
+    <section class="player-details-card" aria-labelledby="player-details-title">
+      <header class="details-card-header">
+        <span class="player-avatar" aria-hidden="true">{{player.name.slice(0, 1).toUpperCase()}}</span>
+        <div class="player-heading">
+          <span class="section-eyebrow">INFORMACIÓN DEL JUGADOR</span>
+          <h2 id="player-details-title">{{player.name}}</h2>
+          <span class="player-status" [class.inactive]="!player.active">
+            <i aria-hidden="true"></i>{{player.active ? 'Activo' : 'Inactivo'}}
+          </span>
+        </div>
+        <span class="player-id">Jugador #{{player.id}}</span>
+      </header>
+      <dl class="player-details-grid">
+        <div>
+          <dt>Identificación</dt>
+          <dd>{{player.identification || 'No registrada'}}</dd>
+        </div>
+        <div class="description-detail">
+          <dt>Descripción</dt>
+          <dd>{{player.description || 'Sin descripción registrada'}}</dd>
+        </div>
+      </dl>
+    </section>
+  </ng-container>
+
+  <section *ngIf="selectedPlayer" class="skills-profile-card" aria-labelledby="player-skills-title">
+    <header class="skills-card-header">
+      <div>
+        <span class="section-eyebrow">PERFIL DE HABILIDADES</span>
+        <h2 id="player-skills-title">Habilidades del jugador</h2>
+        <p>Habilidades actualmente asociadas a este jugador.</p>
+      </div>
+      <span *ngIf="skillsLoaded" class="skills-count">{{skills.length}}</span>
+    </header>
+
+    <div *ngIf="skillsError" class="profile-notice error" role="alert">
+      <span>{{skillsError}}</span>
+      <button type="button" [disabled]="skillsLoading" (click)="selectPlayer()">Reintentar</button>
+    </div>
+    <p *ngIf="skillsLoading" class="profile-loading" role="status">Consultando habilidades…</p>
+    <div *ngIf="skillsLoaded && !skills.length" class="profile-empty">
+      <span class="empty-icon" aria-hidden="true">✦</span>
+      <strong>Sin habilidades asignadas</strong>
+      <span>No hay habilidades registradas para este jugador.</span>
+    </div>
+    <ul *ngIf="skillsLoaded && skills.length" class="skills-list">
+      <li *ngFor="let association of skills; trackBy: trackSkill">
+        <span class="skill-icon" aria-hidden="true">✦</span>
+        <div class="skill-content">
+          <strong>{{association.skill.name}}</strong>
+          <p>{{association.skill.description || 'Sin descripción registrada'}}</p>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section *ngIf="selectedPlayer" class="teams-pending-card" aria-labelledby="teams-pending-title">
+    <div class="pending-icon" aria-hidden="true">♧</div>
+    <div>
+      <span class="pending-label">PENDIENTE DE INTEGRACIÓN · HU-GD-05</span>
+      <h2 id="teams-pending-title">Equipos del jugador</h2>
+      <p>La asociación Jugador–Equipo todavía no está disponible. Esta sección no consulta ni confirma si el jugador pertenece a algún equipo.</p>
+    </div>
+    <span class="pending-badge">Pendiente</span>
+  </section>
+</section>
