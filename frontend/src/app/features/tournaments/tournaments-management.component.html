@@ -1,0 +1,127 @@
+<section class="tournaments-page" aria-labelledby="tournaments-title">
+  <header class="tournaments-header">
+    <div>
+      <span class="eyebrow">GESTIÓN DE COMPETENCIAS</span>
+      <h1 id="tournaments-title">Gestión de Torneos</h1>
+      <p>Organiza torneos y asócialos con un deporte registrado.</p>
+    </div>
+    <button type="button" class="btn btn-primary" [disabled]="busy || !loaded || !sports.length" (click)="openNew()">＋ Nuevo torneo</button>
+  </header>
+
+  <p *ngIf="message" class="tournament-notice success" role="status">{{message}}</p>
+  <div *ngIf="error" class="tournament-notice error" role="alert">
+    <span>{{error}}</span>
+    <button type="button" [disabled]="busy" (click)="refresh()">Actualizar listado</button>
+  </div>
+
+  <div class="tournament-catalog" [attr.aria-busy]="busy">
+    <div class="tournament-toolbar">
+      <label class="tournament-search">
+        <span>Buscar torneo</span>
+        <input type="search" [(ngModel)]="search" placeholder="Nombre o deporte" autocomplete="off">
+      </label>
+      <button type="button" class="tournament-refresh" [disabled]="busy" (click)="refresh()">
+        {{loading ? 'Cargando…' : 'Actualizar'}}
+      </button>
+    </div>
+    <div class="tournament-list-heading">
+      <h2>Torneos registrados <span>{{loaded ? filteredTournaments.length : '—'}}</span></h2>
+      <p>Selecciona un torneo para consultar su detalle.</p>
+    </div>
+    <p *ngIf="loading" class="tournament-status" role="status">Cargando torneos y deportes…</p>
+    <div class="tournament-table-scroll" tabindex="0" role="region" aria-label="Listado de torneos">
+      <table class="tournament-table">
+        <thead>
+          <tr><th scope="col">Torneo</th><th scope="col">Deporte</th><th scope="col">Inscripciones</th><th scope="col">Inicio</th><th scope="col">Acciones</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let tournament of filteredTournaments; trackBy: trackId" [class.selected]="selected?.id === tournament.id">
+            <td>
+              <button type="button" class="tournament-name" [disabled]="busy" (click)="showDetail(tournament)">
+                {{tournament.name}}
+              </button>
+              <small>ID {{tournament.id}}</small>
+            </td>
+            <td>{{sportName(tournament.sportId)}}</td>
+            <td>{{tournament.registrationStartsAt | date:'medium':'UTC'}} – {{tournament.registrationEndsAt | date:'medium':'UTC'}} UTC</td>
+            <td>{{tournament.startsAt | date:'medium':'UTC'}} UTC</td>
+            <td>
+              <div class="tournament-actions">
+                <button type="button" [disabled]="busy" (click)="showDetail(tournament, true)">Editar</button>
+                <button type="button" class="danger" [disabled]="busy" (click)="remove(tournament)">Eliminar</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="loaded && !filteredTournaments.length" class="tournament-empty">
+      <h3>{{tournaments.length ? 'No hay coincidencias' : 'Aún no hay torneos'}}</h3>
+      <p>{{tournaments.length ? 'Prueba con otro nombre o deporte.' : 'Registra un torneo para organizar una competencia.'}}</p>
+    </div>
+    <footer *ngIf="loaded" class="tournament-footer">{{filteredTournaments.length}} de {{tournaments.length}} torneos</footer>
+  </div>
+
+  <aside *ngIf="selected as tournament" class="tournament-detail" aria-labelledby="tournament-detail-title">
+    <div>
+      <span class="detail-label" id="tournament-detail-title">DETALLE DEL TORNEO</span>
+      <h2>{{tournament.name}}</h2>
+      <small>ID {{tournament.id}}</small>
+    </div>
+    <dl>
+      <div><dt>Deporte</dt><dd>{{sportName(tournament.sportId)}}</dd></div>
+      <div><dt>Inicio de inscripciones (UTC)</dt><dd>{{tournament.registrationStartsAt | date:'medium':'UTC'}}</dd></div>
+      <div><dt>Cierre de inscripciones (UTC)</dt><dd>{{tournament.registrationEndsAt | date:'medium':'UTC'}}</dd></div>
+      <div><dt>Inicio del torneo (UTC)</dt><dd>{{tournament.startsAt | date:'medium':'UTC'}}</dd></div>
+    </dl>
+    <button type="button" class="tournament-refresh" [disabled]="busy" (click)="showDetail(tournament, true)">Editar torneo</button>
+  </aside>
+</section>
+
+<dialog #editor class="tournament-dialog" aria-labelledby="tournament-editor-title" (cancel)="cancelEditor($event)">
+  <form #tournamentForm="ngForm" (ngSubmit)="save()">
+    <header>
+      <div>
+        <span class="eyebrow">GESTIÓN DE COMPETENCIAS</span>
+        <h2 id="tournament-editor-title">{{editing ? 'Editar torneo' : 'Registrar torneo'}}</h2>
+        <p>Las fechas se ingresan en la hora local del dispositivo y se guardan en UTC.</p>
+      </div>
+      <button type="button" class="dialog-close" [disabled]="saving" (click)="closeEditor()" aria-label="Cerrar formulario">×</button>
+    </header>
+    <div class="tournament-form-content">
+      <p *ngIf="formError" class="tournament-notice error" role="alert">{{formError}}</p>
+      <fieldset [disabled]="saving">
+        <label>
+          <span>Nombre del torneo <b>*</b></span>
+          <input name="name" [(ngModel)]="form.name" required maxlength="180" pattern=".*\S.*" placeholder="Nombre del torneo">
+        </label>
+        <label>
+          <span>Deporte <b>*</b></span>
+          <select name="sportId" [(ngModel)]="form.sportId" required>
+            <option [ngValue]="null" disabled>Selecciona un deporte</option>
+            <option *ngFor="let sport of sports" [ngValue]="sport.id">{{sport.name}}{{sport.active ? '' : ' (inactivo)'}}</option>
+          </select>
+        </label>
+        <label>
+          <span>Inicio de inscripciones <b>*</b></span>
+          <input type="datetime-local" name="registrationStartsAt" [(ngModel)]="form.registrationStartsAt" step="0.001" required>
+        </label>
+        <label>
+          <span>Cierre de inscripciones <b>*</b></span>
+          <input type="datetime-local" name="registrationEndsAt" [(ngModel)]="form.registrationEndsAt" [min]="form.registrationStartsAt" step="0.001" required>
+        </label>
+        <label>
+          <span>Inicio del torneo <b>*</b></span>
+          <input type="datetime-local" name="startsAt" [(ngModel)]="form.startsAt" [min]="form.registrationEndsAt" step="0.001" required>
+        </label>
+      </fieldset>
+      <p class="date-rule">Reglas: inicio de inscripciones &lt; cierre de inscripciones ≤ inicio del torneo.</p>
+    </div>
+    <footer>
+      <button type="button" class="dialog-cancel" [disabled]="saving" (click)="closeEditor()">Cancelar</button>
+      <button type="submit" class="btn btn-primary" [disabled]="saving || tournamentForm.invalid || !validFields">
+        {{saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar torneo'}}
+      </button>
+    </footer>
+  </form>
+</dialog>
