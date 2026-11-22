@@ -16,12 +16,13 @@ import { SportsManagementComponent } from './features/sports/sports-management.c
 import { TeamsManagementComponent } from './features/teams/teams-management.component';
 import { TournamentsManagementComponent } from './features/tournaments/tournaments-management.component';
 import { TournamentRegistrationsComponent } from './features/tournament-registrations/tournament-registrations.component';
+import { PlayersManagementComponent } from './features/players/players-management.component';
 
 type Page = 'home'|'login'|'register'|'forgot'|'reset-password'|'verify-email'|'two-factor'|'security-settings'|'dashboard'|'sports'|'teams'|'tournaments'|'registrations'|'players'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
 const PUBLIC_PAGES: Page[] = ['home','login','register','forgot','reset-password','verify-email','two-factor'];
 const ADMIN_PAGES: Page[] = ['users','roles','permissions','role-permissions'];
 const ADMIN_ROLE = 'administrador';
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent, SportsManagementComponent, TeamsManagementComponent, TournamentsManagementComponent, TournamentRegistrationsComponent], templateUrl:'./app.component.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent, SportsManagementComponent, TeamsManagementComponent, TournamentsManagementComponent, TournamentRegistrationsComponent, PlayersManagementComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
   private authSessionState = inject(AuthSessionState);
