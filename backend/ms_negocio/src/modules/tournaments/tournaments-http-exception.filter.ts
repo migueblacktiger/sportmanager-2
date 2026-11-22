@@ -8,6 +8,7 @@ import type { Response } from 'express';
 import {
   TournamentDatesInvalidError,
   TournamentHasDependenciesError,
+  TournamentHasRegistrationsError,
   TournamentNotFoundError,
   TournamentSportNotFoundError,
 } from './tournament.errors';
@@ -15,6 +16,7 @@ import {
 @Catch(
   TournamentDatesInvalidError,
   TournamentHasDependenciesError,
+  TournamentHasRegistrationsError,
   TournamentNotFoundError,
   TournamentSportNotFoundError,
 )
@@ -23,6 +25,7 @@ export class TournamentsHttpExceptionFilter implements ExceptionFilter {
     exception:
       | TournamentDatesInvalidError
       | TournamentHasDependenciesError
+      | TournamentHasRegistrationsError
       | TournamentNotFoundError
       | TournamentSportNotFoundError,
     host: ArgumentsHost,
@@ -30,6 +33,7 @@ export class TournamentsHttpExceptionFilter implements ExceptionFilter {
     const status = exception instanceof TournamentDatesInvalidError
       ? HttpStatus.BAD_REQUEST
       : exception instanceof TournamentHasDependenciesError
+        || exception instanceof TournamentHasRegistrationsError
         ? HttpStatus.CONFLICT
         : HttpStatus.NOT_FOUND;
     const response = host.switchToHttp().getResponse<Response>();

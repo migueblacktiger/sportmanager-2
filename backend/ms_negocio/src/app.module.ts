@@ -10,6 +10,7 @@ import { SportsModule } from './modules/sports/sports.module';
 import { TeamsModule } from './modules/teams/teams.module';
 import { TeamSportsModule } from './modules/team-sports/team-sports.module';
 import { TournamentsModule } from './modules/tournaments/tournaments.module';
+import { TournamentRegistrationsModule } from './modules/tournament-registrations/tournament-registrations.module';
 import { PlayersModule } from './modules/players/players.module';
 
 @Module({
@@ -22,6 +23,7 @@ import { PlayersModule } from './modules/players/players.module';
     TeamsModule,
     TeamSportsModule,
     TournamentsModule,
+    TournamentRegistrationsModule,
     PlayersModule,
   ],
   controllers: [AppController],

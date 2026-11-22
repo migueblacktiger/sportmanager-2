@@ -4,6 +4,7 @@ import { CreateTeamSportDto } from './dto/create-team-sport.dto';
 import { TeamSportResponseDto } from './dto/team-sport-response.dto';
 import { TeamSportMapper } from './mappers/team-sport.mapper';
 import { TeamSportsRepository } from './repositories/team-sports.repository';
+import { TeamSportHasTournamentRegistrationsError } from './repositories/team-sport.errors';
 
 @Injectable()
 export class TeamSportsService {
@@ -46,14 +47,14 @@ export class TeamSportsService {
 
   async remove(teamId: number, sportId: number): Promise<{ message: string }> {
     this.validateIds(teamId, sportId);
-    if (!await this.teamSportsRepository.findByPair(teamId, sportId)) {
-      throw new NotFoundException('Asociacion entre equipo y deporte no encontrada');
-    }
     try {
       if (!await this.teamSportsRepository.remove(teamId, sportId)) {
         throw new NotFoundException('Asociacion entre equipo y deporte no encontrada');
       }
     } catch (error: unknown) {
+      if (error instanceof TeamSportHasTournamentRegistrationsError) {
+        throw new ConflictException(error.message);
+      }
       const code = this.databaseCode(error);
       if (code === 'ER_ROW_IS_REFERENCED_2' || code === 'ER_ROW_IS_REFERENCED') {
         throw new ConflictException('La asociacion tiene informacion vinculada que impide retirarla');

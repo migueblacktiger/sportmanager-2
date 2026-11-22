@@ -6,12 +6,15 @@ import { Tournament } from './entities/tournament.entity';
 import { TournamentMapper } from './mappers/tournament.mapper';
 import {
   TournamentDeleteRestrictedError,
+  TournamentRecordDisappearedError,
+  TournamentSportChangeRestrictedError,
   TournamentSportReferenceError,
 } from './repositories/tournament-repository.errors';
 import { TournamentsRepository } from './repositories/tournaments.repository';
 import {
   TournamentDatesInvalidError,
   TournamentHasDependenciesError,
+  TournamentHasRegistrationsError,
   TournamentNotFoundError,
   TournamentSportNotFoundError,
 } from './tournament.errors';
@@ -80,6 +83,12 @@ export class TournamentsService {
     try {
       return await this.tournamentsRepository.save(tournament);
     } catch (error: unknown) {
+      if (error instanceof TournamentSportChangeRestrictedError) {
+        throw new TournamentHasRegistrationsError(tournament.id);
+      }
+      if (error instanceof TournamentRecordDisappearedError) {
+        throw new TournamentNotFoundError(tournament.id);
+      }
       if (error instanceof TournamentSportReferenceError) {
         throw new TournamentSportNotFoundError(tournament.sportId);
       }

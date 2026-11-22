@@ -8,6 +8,7 @@ import { SportMapper } from '../sports/mappers/sport.mapper';
 import { TeamSport } from './entities/team-sport.entity';
 import { TeamSportMapper } from './mappers/team-sport.mapper';
 import { TeamSportsRepository } from './repositories/team-sports.repository';
+import { TeamSportHasTournamentRegistrationsError } from './repositories/team-sport.errors';
 import { TeamSportsService } from './team-sports.service';
 
 describe('TeamSportsService', () => {
@@ -115,7 +116,6 @@ describe('TeamSportsService', () => {
   });
 
   it('removes only the requested association', async () => {
-    repository.findByPair.mockResolvedValue(association);
     repository.remove.mockResolvedValue(true);
     await expect(service.remove(2, 3)).resolves.toEqual({ message: 'Asociacion retirada correctamente; equipo y deporte conservados' });
     expect(repository.remove).toHaveBeenCalledWith(2, 3);
@@ -125,14 +125,19 @@ describe('TeamSportsService', () => {
   });
 
   it('returns 404 for a missing association', async () => {
+    repository.remove.mockResolvedValue(false);
     await expect(service.remove(2, 3)).rejects.toBeInstanceOf(NotFoundException);
-    expect(repository.remove).not.toHaveBeenCalled();
+    expect(repository.remove).toHaveBeenCalledWith(2, 3);
   });
 
   it('returns 404 if another request removes the association first', async () => {
-    repository.findByPair.mockResolvedValue(association);
     repository.remove.mockResolvedValue(false);
     await expect(service.remove(2, 3)).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('returns 409 while a tournament registration depends on the association', async () => {
+    repository.remove.mockRejectedValue(new TeamSportHasTournamentRegistrationsError());
+    await expect(service.remove(2, 3)).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('returns 409 if future linked data prevents removing the association', async () => {
