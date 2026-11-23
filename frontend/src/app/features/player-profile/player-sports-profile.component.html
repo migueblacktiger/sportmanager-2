@@ -3,7 +3,7 @@
     <div>
       <span class="eyebrow">GESTIÓN DEPORTIVA</span>
       <h1 id="sports-profile-title">Perfil deportivo del jugador</h1>
-      <p>Consulta los datos y las habilidades registradas para un jugador.</p>
+      <p>Consulta los datos, habilidades y asociaciones con equipos registradas para un jugador.</p>
     </div>
     <button type="button" class="profile-refresh" [disabled]="busy" (click)="loadPlayers()">
       {{catalogLoading ? 'Cargando…' : 'Actualizar jugadores'}}
@@ -92,13 +92,47 @@
     </ul>
   </section>
 
-  <section *ngIf="selectedPlayer" class="teams-pending-card" aria-labelledby="teams-pending-title">
-    <div class="pending-icon" aria-hidden="true">♧</div>
-    <div>
-      <span class="pending-label">PENDIENTE DE INTEGRACIÓN · HU-GD-05</span>
-      <h2 id="teams-pending-title">Equipos del jugador</h2>
-      <p>La asociación Jugador–Equipo todavía no está disponible. Esta sección no consulta ni confirma si el jugador pertenece a algún equipo.</p>
+  <section *ngIf="selectedPlayer" class="teams-profile-card" aria-labelledby="player-teams-title">
+    <header class="teams-card-header">
+      <div>
+        <span class="section-eyebrow">ASOCIACIONES REGISTRADAS</span>
+        <h2 id="player-teams-title">Equipos del jugador</h2>
+        <p>Incluye asignaciones programadas, vigentes y del historial.</p>
+      </div>
+      <span *ngIf="teamsLoaded" class="teams-count">{{teams.length}}</span>
+    </header>
+
+    <div *ngIf="teamsError" class="profile-notice error" role="alert">
+      <span>{{teamsError}}</span>
+      <button type="button" [disabled]="teamsLoading" (click)="retryTeams()">Reintentar</button>
     </div>
-    <span class="pending-badge">Pendiente</span>
+    <p *ngIf="teamsLoading" class="profile-loading" role="status">Consultando equipos asociados…</p>
+    <div *ngIf="teamsLoaded && !teams.length" class="profile-empty">
+      <span class="empty-icon" aria-hidden="true">♧</span>
+      <strong>Sin equipos registrados</strong>
+      <span>El backend no encontró asociaciones de equipos para este jugador.</span>
+    </div>
+    <ul *ngIf="teamsLoaded && teams.length" class="teams-list">
+      <li *ngFor="let association of teams; trackBy: trackTeam">
+        <span class="team-icon" aria-hidden="true">♧</span>
+        <div class="team-content">
+          <div class="team-heading">
+            <strong>{{association.team.name}}</strong>
+            <span class="team-status" [class.scheduled]="association.status === 'programada'"
+              [class.current]="association.status === 'vigente'"
+              [class.expired]="association.status === 'vencida'"
+              [class.finished]="association.status === 'finalizada'">
+              {{association.status}}
+            </span>
+          </div>
+          <span class="team-period">
+            Periodo: {{formatDate(association.startDate)}} – {{formatDate(association.endDate)}}
+          </span>
+          <span *ngIf="association.finishedAt" class="team-finished">
+            Finalizado: {{formatFinishedAt(association.finishedAt)}}
+          </span>
+        </div>
+      </li>
+    </ul>
   </section>
 </section>

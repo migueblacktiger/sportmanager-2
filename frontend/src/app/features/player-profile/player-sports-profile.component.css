@@ -39,15 +39,25 @@
 .profile-empty>span:last-child{color:#91a7bb;font-size:9px;line-height:1.6}
 .compact-empty{justify-items:start;padding:14px 0 0;text-align:left}
 .empty-icon{display:grid;width:34px;height:34px;place-items:center;border:1px solid #2b5364;border-radius:9px;background:#102a38;color:#8ed6e0;font-size:16px}
-.teams-pending-card{display:flex;align-items:center;gap:14px;padding:18px 20px;border:1px dashed #47536a;border-radius:11px;background:#101827}
-.pending-icon{display:grid;flex:0 0 38px;width:38px;height:38px;place-items:center;border:1px solid #49556d;border-radius:9px;background:#1a2231;color:#aab8ca;font-size:18px}
-.teams-pending-card>div{flex:1;min-width:0}
-.pending-label{color:#b4a57f;font-size:8px;font-weight:700;letter-spacing:.8px}
-.teams-pending-card h2{margin:5px 0;color:#d8e0e9;font-size:13px}
-.teams-pending-card p{margin:0;color:#91a0b2;font-size:10px;line-height:1.6}
-.pending-badge{flex:0 0 auto;padding:5px 8px;border:1px solid #4b5362;border-radius:6px;background:#1b2230;color:#c3ccda;font-size:9px}
+.teams-profile-card{margin-bottom:17px;padding:0;border:1px solid var(--profile-border);border-radius:11px;background:#0a1726;overflow:hidden}
+.teams-card-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 21px;border-bottom:1px solid #21364a}
+.teams-card-header h2{margin:7px 0 5px;font-size:15px}
+.teams-card-header p{margin:0;color:#92a7bb;font-size:10px}
+.teams-count{display:grid;min-width:30px;height:26px;place-items:center;padding:0 7px;border:1px solid #2c4357;border-radius:6px;background:#102235;color:#bdd0df;font-size:10px}
+.teams-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:0;padding:17px 21px;list-style:none}
+.teams-list li{display:flex;align-items:flex-start;gap:10px;min-width:0;padding:12px;border:1px solid #21374b;border-radius:8px;background:#0b1c2b}
+.team-icon{display:grid;flex:0 0 29px;width:29px;height:29px;place-items:center;border:1px solid #2b5364;border-radius:7px;background:#102a38;color:#8ed6e0}
+.team-content{display:grid;gap:7px;min-width:0}
+.team-heading{display:flex;align-items:center;flex-wrap:wrap;gap:7px}
+.team-heading strong{color:#e0e9f1;font-size:11px;overflow-wrap:anywhere}
+.team-period,.team-finished{color:#91a7bb;font-size:9px;line-height:1.5}
+.team-status{padding:3px 6px;border:1px solid #405065;border-radius:5px;background:#1a2636;color:#c2ccda;font-size:8px}
+.team-status.scheduled{border-color:#5c4d2b;background:#282315;color:#e3c67f}
+.team-status.current{border-color:#2b654c;background:#10291f;color:#9ee1b9}
+.team-status.expired{border-color:#515b68;background:#1d2631;color:#adb9c8}
+.team-status.finished{border-color:#604253;background:#2b1925;color:#e1a9bd}
 .profile-loading{margin:8px 0;padding:11px 14px;border:1px solid #2a4357;border-radius:7px;background:#0b1c2a;color:#a9c5d4;font-size:10px}
 .profile-notice{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding:12px 15px;margin:0 0 14px;border:1px solid;border-radius:8px;font-size:10px;line-height:1.6}
 .profile-notice.error{border-color:#8b3039;background:#28121d;color:#ffbcc5}
 .profile-notice button{border:0;border-bottom:1px solid currentColor;background:transparent;color:inherit}
-@media(max-width:700px){.sports-profile-header{align-items:flex-start;flex-direction:column}.sports-profile-header>.profile-refresh{width:100%}.profile-selector-card,.player-details-card{padding:16px}.skills-list{grid-template-columns:1fr;padding:14px}.skills-card-header{padding:17px}.player-details-grid{grid-template-columns:1fr}.player-id{align-self:flex-start}.teams-pending-card{align-items:flex-start;flex-wrap:wrap;padding:15px}.teams-pending-card>div{flex-basis:calc(100% - 55px)}.pending-badge{margin-left:52px}}
+@media(max-width:700px){.sports-profile-header{align-items:flex-start;flex-direction:column}.sports-profile-header>.profile-refresh{width:100%}.profile-selector-card,.player-details-card{padding:16px}.skills-list,.teams-list{grid-template-columns:1fr;padding:14px}.skills-card-header,.teams-card-header{padding:17px}.player-details-grid{grid-template-columns:1fr}.player-id{align-self:flex-start}}
