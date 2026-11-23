@@ -18,7 +18,7 @@ import com.uc.ms_security.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
 
-/** Explicit, additive bootstrap for HU-GD-01 through HU-GD-04. */
+/** Explicit, additive bootstrap for HU-GD-01 through HU-GD-05. */
 @Component
 @RequiredArgsConstructor
 @Order(3)
@@ -44,7 +44,11 @@ public class BusinessPermissionsInitializer implements ApplicationRunner {
             new Definition("Player", "/negocio/players", "GET"),
             new Definition("Player", "/negocio/players/{id}", "GET"),
             new Definition("Player", "/negocio/players/{id}", "PATCH"),
-            new Definition("Player", "/negocio/players/{id}", "DELETE")
+            new Definition("Player", "/negocio/players/{id}", "DELETE"),
+            new Definition("PlayerTeam", "/negocio/player-teams", "POST"),
+            new Definition("PlayerTeam", "/negocio/player-teams/teams/{teamId}", "GET"),
+            new Definition("PlayerTeam", "/negocio/player-teams/players/{playerId}", "GET"),
+            new Definition("PlayerTeam", "/negocio/player-teams/{id}/finish", "PATCH")
     );
 
     private final PermissionRepository permissionRepository;

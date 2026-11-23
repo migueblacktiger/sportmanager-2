@@ -16,6 +16,8 @@
     <div class="summary-item"><span class="summary-marker is-active" aria-hidden="true"></span><span>Jugadores activos</span><strong>{{loaded ? activePlayersCount : '—'}}</strong></div>
   </div>
 
+  <p class="contracts-entry-hint">Para consultar contratos, pulsa «Equipos e historial» en la fila del jugador.</p>
+
   <p *ngIf="message" class="notice success" role="status">{{message}}</p>
   <div *ngIf="error" class="notice error" role="alert"><span>{{error}}</span><button type="button" class="notice-retry" [disabled]="busy" (click)="refresh()">Actualizar listado</button></div>
 
@@ -39,7 +41,7 @@
         <thead><tr><th scope="col">Jugador</th><th scope="col">Descripción</th><th scope="col">Estado</th><th scope="col" class="actions-heading">Acciones</th></tr></thead>
         <tbody>
           <tr *ngFor="let player of filteredPlayers; trackBy: trackId" [class.selected-row]="selected?.id === player.id">
-            <td class="name-cell"><div class="player-identity"><span class="player-monogram" aria-hidden="true">{{player.name.slice(0, 1).toLocaleUpperCase('es')}}</span><div><button type="button" class="player-link" [disabled]="busy" (click)="showDetail(player)" [attr.aria-label]="'Consultar detalle de ' + player.name + ', ID ' + player.id">{{player.name}}</button><small class="player-id">{{player.identification ? 'Identificación: ' + player.identification : 'Sin identificación'}}</small><small class="player-id">ID {{player.id}}</small></div></div></td>
+            <td class="name-cell"><div class="player-identity"><span class="player-monogram" aria-hidden="true">{{player.name.slice(0, 1).toLocaleUpperCase('es')}}</span><div><button type="button" class="player-link" [disabled]="busy" (click)="showDetail(player)" [attr.aria-label]="'Consultar detalle de ' + player.name + ', ID ' + player.id">{{player.name}}</button><small class="player-id">{{player.identification ? 'Identificación: ' + player.identification : 'Sin identificación'}}</small><small class="player-id">ID {{player.id}}</small><button type="button" class="contracts-access" [disabled]="busy" (click)="showContracts(player)" [attr.aria-label]="'Equipos e historial de ' + player.name + ', ID ' + player.id">Equipos e historial<span aria-hidden="true"> →</span></button></div></div></td>
             <td class="description-cell" data-label="Descripción"><span class="description-preview" [class.no-description]="!player.description">{{player.description || 'Sin descripción'}}</span></td>
             <td class="status-cell"><span class="player-status" [class.is-active]="player.active"><span aria-hidden="true"></span>{{player.active ? 'Activo' : 'Inactivo'}}</span></td>
             <td class="actions-cell"><div class="player-actions">
@@ -60,6 +62,7 @@
     <div class="detail-identity"><span class="detail-eyebrow" id="player-detail-title">DETALLE DEL JUGADOR</span><h2>{{player.name}}</h2><div class="detail-meta"><span>ID {{player.id}}</span><span class="player-status" [class.is-active]="player.active"><span aria-hidden="true"></span>{{player.active ? 'Activo' : 'Inactivo'}}</span></div></div>
     <div class="detail-description"><h3>Identificación</h3><p class="identification-value">{{player.identification || 'Sin identificación registrada'}}</p><h3>Descripción</h3><p>{{player.description || 'Este jugador aún no tiene una descripción.'}}</p></div>
     <button type="button" class="refresh-button detail-edit" [disabled]="busy" (click)="showDetail(player, true)">Editar jugador</button>
+    <app-player-teams #contractsSection class="contracts-panel" tabindex="-1" aria-label="Equipos e historial" [player]="player" [contextBusy]="busy"></app-player-teams>
   </aside>
 </section>
 

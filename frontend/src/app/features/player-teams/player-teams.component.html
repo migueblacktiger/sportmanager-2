@@ -1,0 +1,49 @@
+<section *ngIf="teamMode || playerMode" class="contracts-section" [attr.aria-labelledby]="idPrefix + '-title'">
+  <header class="contracts-heading">
+    <div><h3 [id]="idPrefix + '-title'">{{teamMode ? 'Jugadores del equipo' : 'Equipos e historial'}} <span class="contract-count">{{loaded ? contracts.length : '—'}}</span></h3><p>{{teamMode ? 'Contratos y plantilla de ' + team?.name : 'Trayectoria de ' + player?.name}}. Las asignaciones anteriores permanecen en el historial.</p></div>
+    <button type="button" class="contract-button" [disabled]="busy" (click)="refresh()">Actualizar historial</button>
+  </header>
+  <p *ngIf="message" class="contract-notice success" role="status">{{message}}</p>
+  <p *ngIf="actionError" class="contract-notice error" role="alert">{{actionError}}</p>
+  <div *ngIf="historyError" class="contract-notice error" role="alert"><span>{{historyError}}</span><button type="button" [disabled]="busy" (click)="refresh()">Reintentar consulta</button></div>
+  <p *ngIf="loading" class="contract-feedback" role="status">Cargando contratos e historial…</p>
+  <p *ngIf="saving" class="contract-feedback" role="status">Guardando operación…</p>
+
+  <div class="history-content" *ngIf="loaded" [attr.aria-busy]="saving">
+    <div class="history-toolbar"><label [for]="idPrefix + '-status'">Mostrar contratos</label><select [id]="idPrefix + '-status'" [(ngModel)]="statusFilter"><option value="all">Todos: actuales e históricos</option><option value="programada">Programados</option><option value="vigente">Vigentes</option><option value="vencida">Vencidos</option><option value="finalizada">Finalizados</option></select><span>{{filteredContracts.length}} de {{contracts.length}} contratos</span></div>
+    <div class="contract-table-scroll" tabindex="0" role="region" aria-label="Contratos actuales e históricos" *ngIf="filteredContracts.length; else emptyHistory">
+      <table class="contract-table">
+        <caption class="sr-only">{{teamMode ? 'Jugadores contratados por el equipo' : 'Equipos del jugador'}}, fechas inclusivas, estado y finalización anticipada.</caption>
+        <thead><tr><th scope="col">{{teamMode ? 'Jugador' : 'Equipo'}}</th><th scope="col">Periodo contractual</th><th scope="col">Estado</th><th scope="col">Finalización anticipada</th><th scope="col" *ngIf="teamMode">Acciones</th></tr></thead>
+        <tbody><tr *ngFor="let contract of filteredContracts; trackBy: trackContract">
+          <td [attr.data-label]="teamMode ? 'Jugador' : 'Equipo'"><strong>{{teamMode ? contract.player.name : contract.team.name}}</strong><small>Contrato #{{contract.id}} · {{teamMode ? 'Jugador #' + contract.playerId : 'Equipo #' + contract.teamId}}</small><small *ngIf="teamMode">{{contract.player.identification || 'Sin identificación'}}</small></td>
+          <td data-label="Periodo contractual"><time [attr.datetime]="contract.startDate">{{formatDate(contract.startDate)}}</time><span class="period-separator"> hasta </span><time [attr.datetime]="contract.endDate">{{formatDate(contract.endDate)}}</time></td>
+          <td data-label="Estado"><span class="contract-status" [class.is-current]="contract.status === 'vigente'" [class.is-scheduled]="contract.status === 'programada'">{{contract.status}}</span></td>
+          <td data-label="Finalización anticipada"><ng-container *ngIf="contract.finishedAt as finished; else noFinish"><time [attr.datetime]="finished">{{formatFinished(finished)}}</time><small>Hora de Bogotá</small></ng-container><ng-template #noFinish><span class="muted-value">Sin retirada anticipada</span></ng-template></td>
+          <td data-label="Acciones" *ngIf="teamMode"><button type="button" class="contract-button finish-button" *ngIf="canFinish(contract); else preserved" [disabled]="busy" (click)="finish(contract)" [attr.aria-label]="'Finalizar contrato ' + contract.id + ' de ' + contract.player.name">Finalizar asignación</button><ng-template #preserved><span class="muted-value">Historial conservado</span></ng-template></td>
+        </tr></tbody>
+      </table>
+    </div>
+    <ng-template #emptyHistory><div class="contract-empty"><p>{{contracts.length ? 'No hay contratos con el estado seleccionado.' : 'Todavía no hay contratos registrados.'}}</p><small>{{teamMode ? 'Registra una asignación con las fechas del contrato.' : 'Las asignaciones se registran desde el detalle de un equipo.'}}</small></div></ng-template>
+  </div>
+
+  <div *ngIf="teamMode" class="new-contract">
+    <h4>Asignar jugador</h4>
+    <p class="contract-feedback">Las fechas inicial y final están incluidas. Se permiten nuevos periodos con el mismo jugador y contratos con equipos distintos.</p>
+    <p *ngIf="catalogLoading" class="contract-feedback" role="status">Cargando jugadores disponibles…</p>
+    <div *ngIf="catalogError" class="contract-notice error" role="alert"><span>{{catalogError}}</span><button type="button" [disabled]="busy" (click)="refresh()">Actualizar jugadores</button></div>
+    <p *ngIf="catalogLoaded && !players.length" class="contract-feedback">No hay jugadores registrados. Registra uno en Gestión de Jugadores antes de asignarlo.</p>
+    <form #contractForm="ngForm" (ngSubmit)="assign()" [attr.aria-label]="'Asignar jugador a ' + team?.name">
+      <fieldset class="contract-fields" [disabled]="busy || !loaded || !catalogLoaded">
+        <div class="contract-field player-selector"><label [for]="idPrefix + '-player'">Jugador <span aria-hidden="true">*</span></label><select [id]="idPrefix + '-player'" name="playerId" [(ngModel)]="form.playerId" #selectedPlayer="ngModel" required [attr.aria-describedby]="idPrefix + '-player-hint'" [attr.aria-invalid]="selectedPlayer.invalid && (selectedPlayer.touched || contractForm.submitted)"><option [ngValue]="null">Selecciona un jugador</option><option *ngFor="let option of players; trackBy: trackPlayer" [ngValue]="option.id">{{option.name}} · {{option.identification || 'ID ' + option.id}}{{option.active ? '' : ' (inactivo)'}}</option></select><small [id]="idPrefix + '-player-hint'">Todos los jugadores registrados; los contratos previos no impiden un regreso.</small><span class="field-error" *ngIf="selectedPlayer.invalid && (selectedPlayer.touched || contractForm.submitted)">Selecciona un jugador existente.</span></div>
+        <div class="contract-field"><label [for]="idPrefix + '-start'">Fecha inicial <span aria-hidden="true">*</span></label><input [id]="idPrefix + '-start'" type="date" name="startDate" [(ngModel)]="form.startDate" (ngModelChange)="clearOverlapError()" #start="ngModel" required min="1000-01-01" max="9999-12-31" [attr.aria-describedby]="idPrefix + '-start-error'" [attr.aria-invalid]="(start.touched || contractForm.submitted) && !isCalendarDate(form.startDate)"><span [id]="idPrefix + '-start-error'" class="field-error" *ngIf="(start.touched || contractForm.submitted) && !isCalendarDate(form.startDate)">Indica una fecha inicial válida.</span></div>
+        <div class="contract-field"><label [for]="idPrefix + '-end'">Fecha final <span aria-hidden="true">*</span></label><input [id]="idPrefix + '-end'" type="date" name="endDate" [(ngModel)]="form.endDate" (ngModelChange)="clearOverlapError()" #end="ngModel" required [min]="form.startDate || '1000-01-01'" max="9999-12-31" [attr.aria-describedby]="idPrefix + '-end-error'" [attr.aria-invalid]="(end.touched || contractForm.submitted) && !validDates"><span [id]="idPrefix + '-end-error'" class="field-error" *ngIf="(end.touched || contractForm.submitted) && !validDates">Indica una fecha válida, igual o posterior al inicio.</span></div>
+      </fieldset>
+      <div *ngIf="overlapError" class="contract-overlap-warning" role="alert" aria-atomic="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5m0 3h.01"/></svg>
+        <p>{{overlapError}}</p>
+      </div>
+      <div class="contract-form-footer"><small>Los periodos efectivos del mismo jugador y equipo no pueden solaparse. La finalización nunca borra el historial.</small><button type="submit" class="btn btn-primary assign-button" [disabled]="!canAssign || contractForm.invalid">{{saving ? 'Guardando…' : 'Registrar asignación'}}</button></div>
+    </form>
+  </div>
+</section>

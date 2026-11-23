@@ -2,13 +2,14 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule, NgForm } from '@angular/forms';
+import { PlayerTeamsComponent } from '../player-teams/player-teams.component';
 import { firstValueFrom } from 'rxjs';
 import { CreatePlayerRequest, PlayerDto, PlayersApiService, UpdatePlayerRequest } from './players-api.service';
 
 @Component({
   selector: 'app-players-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PlayerTeamsComponent],
   templateUrl: './players-management.component.html',
   styleUrl: './players-management.component.css',
 })
@@ -16,6 +17,7 @@ export class PlayersManagementComponent implements OnInit {
   private readonly api = inject(PlayersApiService);
   @ViewChild('editor', { static: true }) private editor!: ElementRef<HTMLDialogElement>;
   @ViewChild('playerForm') private formDirective?: NgForm;
+  @ViewChild('contractsSection', { read: ElementRef }) private contractsSection?: ElementRef<HTMLElement>;
 
   players: PlayerDto[] = [];
   selected: PlayerDto | null = null;
@@ -80,6 +82,19 @@ export class PlayersManagementComponent implements OnInit {
       if (error instanceof HttpErrorResponse && error.status === 404 && this.selected?.id === player.id) this.selected = null;
       this.error = this.api.errorMessage(error);
     } finally { this.detailLoading = false; }
+  }
+
+  async showContracts(player: PlayerDto): Promise<void> {
+    if (this.busy) return;
+    await this.showDetail(player);
+    if (this.error || this.selected?.id !== player.id) return;
+    // Wait for Angular to render the conditional detail before moving focus.
+    requestAnimationFrame(() => {
+      const section = this.contractsSection?.nativeElement;
+      if (this.selected?.id !== player.id || !section?.isConnected) return;
+      section.scrollIntoView({ behavior: 'auto', block: 'start' });
+      section.focus({ preventScroll: true });
+    });
   }
 
   openNew(): void {

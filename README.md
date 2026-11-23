@@ -18,12 +18,13 @@ Al iniciar se crean únicamente los permisos faltantes del catálogo y los roles
 otorgan permisos automáticamente a ningún rol. Cada usuario registrado
 públicamente recibe el rol `Usuario`.
 
-### Preparar permisos de negocio (HU-GD-01 a HU-GD-04)
+### Preparar permisos de negocio (HU-GD-01 a HU-GD-05)
 
-El catalogo versionado de `BusinessPermissionsInitializer` contiene 19 permisos:
-5 de `Sport`, 5 de `Team`, 4 de `TeamSport` y 5 de `Player`, con las rutas `/negocio` reales de
-NestJS y `PATCH` para las actualizaciones. Para registrarlos y agregarlos al
-Administrador, inicia **ms_security** una vez con la opcion explicita:
+El catalogo versionado de `BusinessPermissionsInitializer` contiene 23 permisos:
+5 de `Sport`, 5 de `Team`, 4 de `TeamSport`, 5 de `Player` y 4 de `PlayerTeam`,
+con las rutas `/negocio` reales de NestJS y `PATCH` para las actualizaciones.
+Para registrarlos y agregarlos al Administrador, inicia **ms_security** una vez
+con la opcion explicita:
 
 ```powershell
 cd backend/ms_security
@@ -46,7 +47,7 @@ el rol durante la asignacion para serializar ejecuciones concurrentes.
 Puedes repetir el comando sin duplicar registros. Tras completar la preparacion,
 arranca normalmente sin la bandera: los arranques habituales no restauran
 concesiones revocadas. Ejecutar de nuevo la bandera vuelve a conceder cualquier
-permiso faltante de este conjunto de 19 al Administrador. No asigna los permisos
+permiso faltante de este conjunto de 23 al Administrador. No asigna los permisos
 administrativos `/api/...`; estos siguen gestionandose explicitamente.
 
 Este paso no sustituye las migraciones de `ms_negocio`. Los usuarios que deban
@@ -58,7 +59,19 @@ Los permisos de `Player` son POST y GET `/negocio/players`, y GET, PATCH y DELET
 instalacion existente, utiliza los endpoints administrativos de permisos y
 asociaciones. No ejecutes este inicializador completo si necesitas conservar
 revocaciones de otros permisos de negocio: la bandera restaura cualquier
-asociacion faltante de los 19 permisos del catalogo.
+asociacion faltante de los 23 permisos del catalogo.
+
+Los cuatro permisos de `PlayerTeam` son:
+
+| Metodo | Ruta |
+|---|---|
+| POST | `/negocio/player-teams` |
+| GET | `/negocio/player-teams/teams/{teamId}` |
+| GET | `/negocio/player-teams/players/{playerId}` |
+| PATCH | `/negocio/player-teams/{id}/finish` |
+
+La finalizacion usa PATCH y conserva el historial; no se agrega un permiso DELETE.
+Las consultas con filtro de estado utilizan el mismo permiso GET de su ruta.
 
 ### Aprovisionar el primer Administrador
 

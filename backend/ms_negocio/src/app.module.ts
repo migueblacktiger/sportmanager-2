@@ -13,6 +13,7 @@ import { TournamentsModule } from './modules/tournaments/tournaments.module';
 import { TournamentRegistrationsModule } from './modules/tournament-registrations/tournament-registrations.module';
 import { PlayersModule } from './modules/players/players.module';
 import { PlayerSkillsModule } from './modules/player-skills/player-skills.module';
+import { PlayerTeamsModule } from './modules/player-teams/player-teams.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PlayerSkillsModule } from './modules/player-skills/player-skills.module
     TournamentRegistrationsModule,
     PlayersModule,
     PlayerSkillsModule,
+    PlayerTeamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
