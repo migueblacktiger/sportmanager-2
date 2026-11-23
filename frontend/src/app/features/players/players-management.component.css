@@ -124,3 +124,9 @@ button:disabled { cursor:not-allowed; opacity:.5; }
 
 .player-id { overflow-wrap:anywhere; white-space:normal; }
 .identification-value { overflow-wrap:anywhere; margin-bottom:14px; }
+
+.contracts-entry-hint { margin:0 0 16px; color:#9eb6c9; font-size:12px; line-height:1.7; }
+.contracts-access { display:inline-flex; align-items:center; gap:5px; margin-top:9px; padding:7px 9px; min-height:36px; max-width:100%; border:1px solid #28566a; border-radius:6px; background:#102b38; color:#8fd6e4; font-size:10px; line-height:1.5; text-align:left; white-space:normal; }
+.contracts-access:hover:not(:disabled) { border-color:#43869a; background:#16394a; }
+.contracts-panel { scroll-margin-top:90px; }
+.contracts-panel:focus { outline:2px solid var(--cyan); outline-offset:5px; border-radius:6px; }

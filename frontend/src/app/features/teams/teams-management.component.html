@@ -16,6 +16,8 @@
     <div class="summary-item"><span class="summary-marker is-active" aria-hidden="true"></span><span>Equipos activos</span><strong>{{loaded ? activeTeamsCount : '—'}}</strong></div>
   </div>
 
+  <p class="contracts-entry-hint">Para gestionar contratos, pulsa «Jugadores del equipo» en la fila del equipo.</p>
+
   <p *ngIf="message" class="notice success" role="status">{{message}}</p>
   <div *ngIf="error" class="notice error" role="alert"><span>{{error}}</span><button type="button" class="notice-retry" [disabled]="busy" (click)="refresh()">Actualizar listado</button></div>
 
@@ -39,7 +41,7 @@
         <thead><tr><th scope="col">Equipo</th><th scope="col">Descripción</th><th scope="col">Estado</th><th scope="col" class="actions-heading">Acciones</th></tr></thead>
         <tbody>
           <tr *ngFor="let team of filteredTeams; trackBy: trackId" [class.selected-row]="selected?.id === team.id">
-            <td class="name-cell"><div class="team-identity"><span class="team-monogram" aria-hidden="true">{{team.name.slice(0, 1).toLocaleUpperCase('es')}}</span><div><button type="button" class="team-link" [disabled]="busy" (click)="showDetail(team)" [attr.aria-label]="'Consultar detalle de ' + team.name + ', ID ' + team.id">{{team.name}}</button><small class="team-id">ID {{team.id}}</small></div></div></td>
+            <td class="name-cell"><div class="team-identity"><span class="team-monogram" aria-hidden="true">{{team.name.slice(0, 1).toLocaleUpperCase('es')}}</span><div><button type="button" class="team-link" [disabled]="busy" (click)="showDetail(team)" [attr.aria-label]="'Consultar detalle de ' + team.name + ', ID ' + team.id">{{team.name}}</button><small class="team-id">ID {{team.id}}</small><button type="button" class="contracts-access" [disabled]="busy" (click)="showContracts(team)" [attr.aria-label]="'Jugadores del equipo de ' + team.name + ', ID ' + team.id">Jugadores del equipo<span aria-hidden="true"> →</span></button></div></div></td>
             <td class="description-cell" data-label="Descripción"><span class="description-preview" [class.no-description]="!team.description">{{team.description || 'Sin descripción'}}</span></td>
             <td class="status-cell"><span class="team-status" [class.is-active]="team.active"><span aria-hidden="true"></span>{{team.active ? 'Activo' : 'Inactivo'}}</span></td>
             <td class="actions-cell"><div class="team-actions">
@@ -61,6 +63,7 @@
     <div class="detail-description"><h3>Descripción</h3><p>{{team.description || 'Este equipo aún no tiene una descripción.'}}</p></div>
     <button type="button" class="refresh-button detail-edit" [disabled]="busy" (click)="showDetail(team, true)">Editar equipo</button>
     <app-team-sports [team]="team" [teamBusy]="busy"></app-team-sports>
+    <app-player-teams #contractsSection class="contracts-panel" tabindex="-1" aria-label="Jugadores del equipo" [team]="team" [contextBusy]="busy"></app-player-teams>
   </aside>
 </section>
 

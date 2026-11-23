@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule, NgForm } from '@angular/forms';
+import { PlayerTeamsComponent } from '../player-teams/player-teams.component';
 import { firstValueFrom } from 'rxjs';
 import { CreateTeamRequest, TeamDto, TeamsApiService, UpdateTeamRequest } from './teams-api.service';
 import { TeamSportsComponent } from '../team-sports/team-sports.component';
@@ -9,7 +10,7 @@ import { TeamSportsComponent } from '../team-sports/team-sports.component';
 @Component({
   selector: 'app-teams-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TeamSportsComponent],
+  imports: [CommonModule, FormsModule, TeamSportsComponent, PlayerTeamsComponent],
   templateUrl: './teams-management.component.html',
   styleUrl: './teams-management.component.css',
 })
@@ -17,6 +18,7 @@ export class TeamsManagementComponent implements OnInit {
   private readonly api = inject(TeamsApiService);
   @ViewChild('editor', { static: true }) private editor!: ElementRef<HTMLDialogElement>;
   @ViewChild('teamForm') private formDirective?: NgForm;
+  @ViewChild('contractsSection', { read: ElementRef }) private contractsSection?: ElementRef<HTMLElement>;
 
   teams: TeamDto[] = [];
   selected: TeamDto | null = null;
@@ -78,6 +80,19 @@ export class TeamsManagementComponent implements OnInit {
       if (error instanceof HttpErrorResponse && error.status === 404 && this.selected?.id === team.id) this.selected = null;
       this.error = this.api.errorMessage(error);
     } finally { this.detailLoading = false; }
+  }
+
+  async showContracts(team: TeamDto): Promise<void> {
+    if (this.busy) return;
+    await this.showDetail(team);
+    if (this.error || this.selected?.id !== team.id) return;
+    // Wait for Angular to render the conditional detail before moving focus.
+    requestAnimationFrame(() => {
+      const section = this.contractsSection?.nativeElement;
+      if (this.selected?.id !== team.id || !section?.isConnected) return;
+      section.scrollIntoView({ behavior: 'auto', block: 'start' });
+      section.focus({ preventScroll: true });
+    });
   }
 
   openNew(): void {

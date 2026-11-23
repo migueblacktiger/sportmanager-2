@@ -40,7 +40,11 @@ class BusinessPermissionsInitializerTest {
             Map.entry("GET /negocio/players", "Player"),
             Map.entry("GET /negocio/players/{id}", "Player"),
             Map.entry("PATCH /negocio/players/{id}", "Player"),
-            Map.entry("DELETE /negocio/players/{id}", "Player")
+            Map.entry("DELETE /negocio/players/{id}", "Player"),
+            Map.entry("POST /negocio/player-teams", "PlayerTeam"),
+            Map.entry("GET /negocio/player-teams/teams/{teamId}", "PlayerTeam"),
+            Map.entry("GET /negocio/player-teams/players/{playerId}", "PlayerTeam"),
+            Map.entry("PATCH /negocio/player-teams/{id}/finish", "PlayerTeam")
     );
 
     private PermissionRepository permissionRepository;
@@ -94,10 +98,10 @@ class BusinessPermissionsInitializerTest {
     }
 
     @Test
-    void createsExactlyTheNineteenNestPermissionsAndAssignsOnlyTheNamedAdministrator() {
+    void createsExactlyTheTwentyThreeNestPermissionsAndAssignsOnlyTheNamedAdministrator() {
         seed();
         assertEquals(EXPECTED, permissionModels());
-        assertEquals(19, assignments.size());
+        assertEquals(23, assignments.size());
         assertTrue(assignments.values().stream().allMatch(a -> a.getRole().getId().equals(73L)));
         verify(roleRepository).findByNameIgnoreCaseForUpdate(AuthService.ADMIN_ROLE);
         verifyNoMoreInteractions(roleRepository);
@@ -127,16 +131,16 @@ class BusinessPermissionsInitializerTest {
         RolePermission manual = grant(administrator, unrelated);
         RolePermission otherAssignment = grant(otherRole, existingBusiness);
         seed();
-        assertEquals(20, permissions.size());
+        assertEquals(24, permissions.size());
         assertSame(existingBusiness, permissions.get("GET /negocio/sports"));
         assertEquals("ExistingLabel", existingBusiness.getModel());
         assertSame(unrelated, permissions.get("GET /api/custom-report"));
         assertSame(manual, assignments.get(pair(73L, unrelated.getId())));
         assertSame(otherAssignment, assignments.get(pair(92L, existingBusiness.getId())));
-        assertEquals(20, assignments.values().stream().filter(a -> a.getRole().getId().equals(73L)).count());
+        assertEquals(24, assignments.values().stream().filter(a -> a.getRole().getId().equals(73L)).count());
         assertEquals(1, assignments.values().stream().filter(a -> a.getRole().getId().equals(92L)).count());
-        verify(permissionRepository, times(18)).save(any(Permission.class));
-        verify(rolePermissionRepository, times(18)).save(any(RolePermission.class));
+        verify(permissionRepository, times(22)).save(any(Permission.class));
+        verify(rolePermissionRepository, times(22)).save(any(RolePermission.class));
         verify(roleRepository, never()).save(any(Role.class));
         verify(rolePermissionRepository, never()).deleteAllByRoleId(anyLong());
     }
@@ -147,7 +151,7 @@ class BusinessPermissionsInitializerTest {
         administrator.setName("aDmInIsTrAdOr");
         EXPECTED.forEach(this::existing);
         seed();
-        assertEquals(19, assignments.size());
+        assertEquals(23, assignments.size());
         assertTrue(assignments.values().stream().allMatch(a -> a.getRole().getId().equals(607L)));
         verify(permissionRepository, never()).save(any(Permission.class));
         verify(rolePermissionRepository, never()).existsByRoleIdAndPermissionId(eq(1L), anyLong());
@@ -156,24 +160,61 @@ class BusinessPermissionsInitializerTest {
     }
 
     @Test
-    void upgradesTheOriginalFourteenWithOnlyFivePlayerPermissionsAndKeepsOtherRoles() {
+    void upgradesTheOriginalFourteenWithoutChangingExistingGrants() {
         EXPECTED.forEach((key, model) -> {
-            if (!model.equals("Player")) grant(administrator, existing(key, model));
+            if (!model.equals("Player") && !model.equals("PlayerTeam")) grant(administrator, existing(key, model));
         });
         Role otherRole = role(92L, "Otro rol");
         Permission unrelated = existing("GET /api/custom-report", "CustomReport");
         RolePermission otherAssignment = grant(otherRole, unrelated);
         Map<String, RolePermission> before = new LinkedHashMap<>(assignments);
         seed();
-        assertEquals(20, permissions.size());
-        assertEquals(19, assignments.values().stream()
+        assertEquals(24, permissions.size());
+        assertEquals(23, assignments.values().stream()
                 .filter(a -> a.getRole().getId().equals(administrator.getId())).count());
         before.forEach((key, value) -> assertSame(value, assignments.get(key)));
         assertSame(otherAssignment, assignments.get(pair(otherRole.getId(), unrelated.getId())));
+        verify(permissionRepository, times(9)).save(any(Permission.class));
         verify(permissionRepository, times(5)).save(argThat(p -> p.getModel().equals("Player")));
+        verify(permissionRepository, times(4)).save(argThat(p -> p.getModel().equals("PlayerTeam")));
+        verify(rolePermissionRepository, times(4)).save(argThat(a ->
+                a.getRole().getId().equals(administrator.getId())
+                && a.getPermission().getModel().equals("PlayerTeam")));
         verify(rolePermissionRepository, times(5)).save(argThat(a ->
                 a.getRole().getId().equals(administrator.getId())
                 && a.getPermission().getModel().equals("Player")));
+        verify(rolePermissionRepository, never()).deleteAllByRoleId(anyLong());
+        clearInvocations(permissionRepository, rolePermissionRepository);
+        seed();
+        verify(permissionRepository, never()).save(any(Permission.class));
+        verify(rolePermissionRepository, never()).save(any(RolePermission.class));
+    }
+
+    @Test
+    void upgradesTheOriginalNineteenWithOnlyFourPlayerTeamPermissionsIdempotently() {
+        EXPECTED.forEach((key, model) -> {
+            if (!model.equals("PlayerTeam")) grant(administrator, existing(key, model));
+        });
+        Permission unrelated = existing("GET /api/custom-report", "CustomReport");
+        Role otherRole = role(92L, "Otro rol");
+        RolePermission manual = grant(administrator, unrelated);
+        RolePermission otherAssignment = grant(otherRole, unrelated);
+        Map<String, Permission> originalPermissions = new LinkedHashMap<>(permissions);
+        Map<String, RolePermission> originalAssignments = new LinkedHashMap<>(assignments);
+        seed();
+        assertEquals(24, permissions.size());
+        assertEquals(24, assignments.values().stream()
+                .filter(a -> a.getRole().getId().equals(administrator.getId())).count());
+        originalPermissions.forEach((key, value) -> assertSame(value, permissions.get(key)));
+        originalAssignments.forEach((key, value) -> assertSame(value, assignments.get(key)));
+        assertSame(manual, assignments.get(pair(administrator.getId(), unrelated.getId())));
+        assertSame(otherAssignment, assignments.get(pair(otherRole.getId(), unrelated.getId())));
+        verify(permissionRepository, times(4)).save(any(Permission.class));
+        verify(permissionRepository, times(4)).save(argThat(p -> p.getModel().equals("PlayerTeam")));
+        verify(rolePermissionRepository, times(4)).save(argThat(a ->
+                a.getRole().getId().equals(administrator.getId())
+                && a.getPermission().getModel().equals("PlayerTeam")));
+        verify(roleRepository, never()).save(any(Role.class));
         verify(rolePermissionRepository, never()).deleteAllByRoleId(anyLong());
         clearInvocations(permissionRepository, rolePermissionRepository);
         seed();
