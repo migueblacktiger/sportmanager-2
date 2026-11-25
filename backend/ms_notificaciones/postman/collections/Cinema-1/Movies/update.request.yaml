@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{cinema_ms}}/movies/1"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Interestelar\",\r
+
+    \  \"duration\": 170,\r
+
+    \  \"date\": \"2014-11-07\"\r
+
+    }"
+order: 4000

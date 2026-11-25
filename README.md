@@ -20,9 +20,11 @@ públicamente recibe el rol `Usuario`.
 
 ### Preparar permisos de negocio (HU-GD-01 a HU-GD-05)
 
-El catalogo versionado de `BusinessPermissionsInitializer` contiene 23 permisos:
-5 de `Sport`, 5 de `Team`, 4 de `TeamSport`, 5 de `Player` y 4 de `PlayerTeam`,
-con las rutas `/negocio` reales de NestJS y `PATCH` para las actualizaciones.
+El catalogo versionado de `BusinessPermissionsInitializer` contiene 70 permisos:
+los 23 de `Sport`, `Team`, `TeamSport`, `Player` y `PlayerTeam`, mas las rutas de
+torneos, fases, grupos, equipos de grupo, partidos, resultados, anotaciones,
+escenarios y resumen de torneo. Usa las rutas `/negocio` reales de NestJS y
+`PATCH` para las actualizaciones.
 Para registrarlos y agregarlos al Administrador, inicia **ms_security** una vez
 con la opcion explicita:
 
@@ -47,7 +49,7 @@ el rol durante la asignacion para serializar ejecuciones concurrentes.
 Puedes repetir el comando sin duplicar registros. Tras completar la preparacion,
 arranca normalmente sin la bandera: los arranques habituales no restauran
 concesiones revocadas. Ejecutar de nuevo la bandera vuelve a conceder cualquier
-permiso faltante de este conjunto de 23 al Administrador. No asigna los permisos
+permiso faltante de este conjunto de 70 al Administrador. No asigna los permisos
 administrativos `/api/...`; estos siguen gestionandose explicitamente.
 
 Este paso no sustituye las migraciones de `ms_negocio`. Los usuarios que deban
@@ -59,7 +61,7 @@ Los permisos de `Player` son POST y GET `/negocio/players`, y GET, PATCH y DELET
 instalacion existente, utiliza los endpoints administrativos de permisos y
 asociaciones. No ejecutes este inicializador completo si necesitas conservar
 revocaciones de otros permisos de negocio: la bandera restaura cualquier
-asociacion faltante de los 23 permisos del catalogo.
+asociacion faltante de los 70 permisos del catalogo.
 
 Los cuatro permisos de `PlayerTeam` son:
 

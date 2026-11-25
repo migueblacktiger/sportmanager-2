@@ -21,6 +21,7 @@ import com.uc.ms_security.repository.RoleRepository;
 import com.uc.ms_security.service.AuthService;
 
 class BusinessPermissionsInitializerTest {
+    private static final int CURRENT_CATALOG_SIZE = 81;
     private static final Map<String, String> EXPECTED = Map.ofEntries(
             Map.entry("POST /negocio/sports", "Sport"),
             Map.entry("GET /negocio/sports", "Sport"),
@@ -44,7 +45,18 @@ class BusinessPermissionsInitializerTest {
             Map.entry("POST /negocio/player-teams", "PlayerTeam"),
             Map.entry("GET /negocio/player-teams/teams/{teamId}", "PlayerTeam"),
             Map.entry("GET /negocio/player-teams/players/{playerId}", "PlayerTeam"),
-            Map.entry("PATCH /negocio/player-teams/{id}/finish", "PlayerTeam")
+            Map.entry("PATCH /negocio/player-teams/{id}/finish", "PlayerTeam"),
+            Map.entry("POST /negocio/tournaments", "Tournament"),
+            Map.entry("GET /negocio/tournaments", "Tournament"),
+            Map.entry("GET /negocio/tournaments/{id}", "Tournament"),
+            Map.entry("PATCH /negocio/tournaments/{id}", "Tournament"),
+            Map.entry("DELETE /negocio/tournaments/{id}", "Tournament"),
+            Map.entry("POST /negocio/matches/{matchId}/audiences/tickets", "MatchAudience"),
+            Map.entry("GET /negocio/matches/{matchId}/audiences/tickets", "MatchAudience"),
+            Map.entry("DELETE /negocio/matches/{matchId}/audiences/tickets/{fanId}", "MatchAudience"),
+            Map.entry("POST /negocio/matches/{matchId}/audiences/bets", "MatchAudience"),
+            Map.entry("GET /negocio/matches/{matchId}/audiences/bets", "MatchAudience"),
+            Map.entry("DELETE /negocio/matches/{matchId}/audiences/bets/{fanId}", "MatchAudience")
     );
 
     private PermissionRepository permissionRepository;
@@ -98,10 +110,23 @@ class BusinessPermissionsInitializerTest {
     }
 
     @Test
-    void createsExactlyTheTwentyThreeNestPermissionsAndAssignsOnlyTheNamedAdministrator() {
+    void createsTheCurrentCatalogAndAssignsTournamentPermissionsToTheNamedAdministrator() {
         seed();
-        assertEquals(EXPECTED, permissionModels());
-        assertEquals(23, assignments.size());
+        assertEquals(EXPECTED, permissionModels(EXPECTED));
+        assertEquals(CURRENT_CATALOG_SIZE, permissions.size());
+        assertEquals(CURRENT_CATALOG_SIZE, assignments.size());
+        assertEquals("Tournament", permissions.get("POST /negocio/tournaments").getModel());
+        assertEquals("Tournament", permissions.get("GET /negocio/tournaments").getModel());
+        assertEquals("Tournament", permissions.get("GET /negocio/tournaments/{id}").getModel());
+        assertEquals("Tournament", permissions.get("PATCH /negocio/tournaments/{id}").getModel());
+        assertEquals("Tournament", permissions.get("DELETE /negocio/tournaments/{id}").getModel());
+        assertEquals("TournamentPhase", permissions.get(
+                "POST /negocio/tournaments/{tournamentId}/phases").getModel());
+        assertEquals("TournamentPhase", permissions.get(
+                "GET /negocio/tournaments/{tournamentId}/phases").getModel());
+        assertEquals("TournamentPhase", permissions.get("GET /negocio/phases/{id}").getModel());
+        assertEquals("TournamentPhase", permissions.get("PATCH /negocio/phases/{id}").getModel());
+        assertEquals("TournamentPhase", permissions.get("DELETE /negocio/phases/{id}").getModel());
         assertTrue(assignments.values().stream().allMatch(a -> a.getRole().getId().equals(73L)));
         verify(roleRepository).findByNameIgnoreCaseForUpdate(AuthService.ADMIN_ROLE);
         verifyNoMoreInteractions(roleRepository);
@@ -131,29 +156,32 @@ class BusinessPermissionsInitializerTest {
         RolePermission manual = grant(administrator, unrelated);
         RolePermission otherAssignment = grant(otherRole, existingBusiness);
         seed();
-        assertEquals(24, permissions.size());
+        assertEquals(CURRENT_CATALOG_SIZE + 1, permissions.size());
         assertSame(existingBusiness, permissions.get("GET /negocio/sports"));
         assertEquals("ExistingLabel", existingBusiness.getModel());
         assertSame(unrelated, permissions.get("GET /api/custom-report"));
         assertSame(manual, assignments.get(pair(73L, unrelated.getId())));
         assertSame(otherAssignment, assignments.get(pair(92L, existingBusiness.getId())));
-        assertEquals(24, assignments.values().stream().filter(a -> a.getRole().getId().equals(73L)).count());
+        assertEquals(CURRENT_CATALOG_SIZE + 1,
+                assignments.values().stream().filter(a -> a.getRole().getId().equals(73L)).count());
         assertEquals(1, assignments.values().stream().filter(a -> a.getRole().getId().equals(92L)).count());
-        verify(permissionRepository, times(22)).save(any(Permission.class));
-        verify(rolePermissionRepository, times(22)).save(any(RolePermission.class));
+        verify(permissionRepository, times(CURRENT_CATALOG_SIZE - 1)).save(any(Permission.class));
+        verify(rolePermissionRepository, times(CURRENT_CATALOG_SIZE - 1)).save(any(RolePermission.class));
         verify(roleRepository, never()).save(any(Role.class));
         verify(rolePermissionRepository, never()).deleteAllByRoleId(anyLong());
     }
 
     @Test
-    void reusesAllExistingPermissionsAndUsesTheActualRoleIdRatherThanOne() {
+    void reusesLegacyPermissionsAndUsesTheActualRoleIdRatherThanOne() {
         administrator.setId(607L);
         administrator.setName("aDmInIsTrAdOr");
         EXPECTED.forEach(this::existing);
         seed();
-        assertEquals(23, assignments.size());
+        assertEquals(CURRENT_CATALOG_SIZE, permissions.size());
+        assertEquals(CURRENT_CATALOG_SIZE, assignments.size());
         assertTrue(assignments.values().stream().allMatch(a -> a.getRole().getId().equals(607L)));
-        verify(permissionRepository, never()).save(any(Permission.class));
+        verify(permissionRepository, times(CURRENT_CATALOG_SIZE - EXPECTED.size())).save(any(Permission.class));
+        verify(rolePermissionRepository, times(CURRENT_CATALOG_SIZE)).save(any(RolePermission.class));
         verify(rolePermissionRepository, never()).existsByRoleIdAndPermissionId(eq(1L), anyLong());
         verify(roleRepository).findByNameIgnoreCaseForUpdate(AuthService.ADMIN_ROLE);
         verifyNoMoreInteractions(roleRepository);
@@ -162,19 +190,21 @@ class BusinessPermissionsInitializerTest {
     @Test
     void upgradesTheOriginalFourteenWithoutChangingExistingGrants() {
         EXPECTED.forEach((key, model) -> {
-            if (!model.equals("Player") && !model.equals("PlayerTeam")) grant(administrator, existing(key, model));
+            if (model.equals("Sport") || model.equals("Team") || model.equals("TeamSport")) {
+                grant(administrator, existing(key, model));
+            }
         });
         Role otherRole = role(92L, "Otro rol");
         Permission unrelated = existing("GET /api/custom-report", "CustomReport");
         RolePermission otherAssignment = grant(otherRole, unrelated);
         Map<String, RolePermission> before = new LinkedHashMap<>(assignments);
         seed();
-        assertEquals(24, permissions.size());
-        assertEquals(23, assignments.values().stream()
+        assertEquals(CURRENT_CATALOG_SIZE + 1, permissions.size());
+        assertEquals(CURRENT_CATALOG_SIZE, assignments.values().stream()
                 .filter(a -> a.getRole().getId().equals(administrator.getId())).count());
         before.forEach((key, value) -> assertSame(value, assignments.get(key)));
         assertSame(otherAssignment, assignments.get(pair(otherRole.getId(), unrelated.getId())));
-        verify(permissionRepository, times(9)).save(any(Permission.class));
+        verify(permissionRepository, times(CURRENT_CATALOG_SIZE - 14)).save(any(Permission.class));
         verify(permissionRepository, times(5)).save(argThat(p -> p.getModel().equals("Player")));
         verify(permissionRepository, times(4)).save(argThat(p -> p.getModel().equals("PlayerTeam")));
         verify(rolePermissionRepository, times(4)).save(argThat(a ->
@@ -193,7 +223,10 @@ class BusinessPermissionsInitializerTest {
     @Test
     void upgradesTheOriginalNineteenWithOnlyFourPlayerTeamPermissionsIdempotently() {
         EXPECTED.forEach((key, model) -> {
-            if (!model.equals("PlayerTeam")) grant(administrator, existing(key, model));
+            if (model.equals("Sport") || model.equals("Team") || model.equals("TeamSport")
+                    || model.equals("Player")) {
+                grant(administrator, existing(key, model));
+            }
         });
         Permission unrelated = existing("GET /api/custom-report", "CustomReport");
         Role otherRole = role(92L, "Otro rol");
@@ -202,14 +235,14 @@ class BusinessPermissionsInitializerTest {
         Map<String, Permission> originalPermissions = new LinkedHashMap<>(permissions);
         Map<String, RolePermission> originalAssignments = new LinkedHashMap<>(assignments);
         seed();
-        assertEquals(24, permissions.size());
-        assertEquals(24, assignments.values().stream()
+        assertEquals(CURRENT_CATALOG_SIZE + 1, permissions.size());
+        assertEquals(CURRENT_CATALOG_SIZE + 1, assignments.values().stream()
                 .filter(a -> a.getRole().getId().equals(administrator.getId())).count());
         originalPermissions.forEach((key, value) -> assertSame(value, permissions.get(key)));
         originalAssignments.forEach((key, value) -> assertSame(value, assignments.get(key)));
         assertSame(manual, assignments.get(pair(administrator.getId(), unrelated.getId())));
         assertSame(otherAssignment, assignments.get(pair(otherRole.getId(), unrelated.getId())));
-        verify(permissionRepository, times(4)).save(any(Permission.class));
+        verify(permissionRepository, times(CURRENT_CATALOG_SIZE - 19)).save(any(Permission.class));
         verify(permissionRepository, times(4)).save(argThat(p -> p.getModel().equals("PlayerTeam")));
         verify(rolePermissionRepository, times(4)).save(argThat(a ->
                 a.getRole().getId().equals(administrator.getId())
@@ -242,9 +275,14 @@ class BusinessPermissionsInitializerTest {
         initializer.run(new DefaultApplicationArguments("--seed-business-permissions"));
     }
 
-    private Map<String, String> permissionModels() {
+    private Map<String, String> permissionModels(Map<String, String> expected) {
         Map<String, String> result = new LinkedHashMap<>();
-        permissions.forEach((key, value) -> result.put(key, value.getModel()));
+        expected.keySet().forEach(key -> {
+            Permission permission = permissions.get(key);
+            if (permission != null) {
+                result.put(key, permission.getModel());
+            }
+        });
         return result;
     }
 

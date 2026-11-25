@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -19,12 +19,13 @@ import { TournamentRegistrationsComponent } from './features/tournament-registra
 import { PlayersManagementComponent } from './features/players/players-management.component';
 import { PlayerSkillsManagementComponent } from './features/player-skills/player-skills-management.component';
 import { PlayerSportsProfileComponent } from './features/player-profile/player-sports-profile.component';
+import { CompetitionsManagementComponent } from './features/competitions/competitions-management.component';
 
-type Page = 'home'|'login'|'register'|'forgot'|'reset-password'|'verify-email'|'two-factor'|'security-settings'|'dashboard'|'sports'|'teams'|'tournaments'|'registrations'|'players'|'player-skills'|'player-sports-profile'|'profile'|'users'|'roles'|'permissions'|'role-permissions';
+type Page = 'home'|'login'|'register'|'forgot'|'reset-password'|'verify-email'|'two-factor'|'security-settings'|'dashboard'|'sports'|'teams'|'tournaments'|'registrations'|'players'|'player-skills'|'player-sports-profile'|'profile'|'users'|'roles'|'permissions'|'role-permissions'|'competitions';
 const PUBLIC_PAGES: Page[] = ['home','login','register','forgot','reset-password','verify-email','two-factor'];
 const ADMIN_PAGES: Page[] = ['users','roles','permissions','role-permissions'];
 const ADMIN_ROLE = 'administrador';
-@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent, SportsManagementComponent, TeamsManagementComponent, TournamentsManagementComponent, TournamentRegistrationsComponent, PlayersManagementComponent, PlayerSkillsManagementComponent, PlayerSportsProfileComponent], templateUrl:'./app.component.html' })
+@Component({ selector:'app-root', standalone:true, imports:[CommonModule, FormsModule, PermissionManagementComponent, RegistrationComponent, RolePermissionAssignmentComponent, SportsManagementComponent, TeamsManagementComponent, TournamentsManagementComponent, TournamentRegistrationsComponent, PlayersManagementComponent, PlayerSkillsManagementComponent, PlayerSportsProfileComponent, CompetitionsManagementComponent], templateUrl:'./app.component.html' })
 export class AppComponent implements OnInit {
   private api = inject(ApiService);
   private authSessionState = inject(AuthSessionState);
@@ -36,6 +37,10 @@ export class AppComponent implements OnInit {
 
   page: Page = 'home';
   mobileMenu = false;
+  profileMenuOpen = false;
+  competitionMenuOpen = false;
+  competitionSection: 'phases'|'groups'|'finals'|'matches'|'results'|'overview' = 'phases';
+  openCompetitionSection(section: 'phases'|'groups'|'finals'|'matches'|'results'|'overview'){ this.competitionSection=section; this.competitionMenuOpen=true; this.nav('competitions'); }
   toast = '';
   search = '';
 
@@ -370,6 +375,7 @@ export class AppComponent implements OnInit {
   }
   logout(){
     if(this.twoFactorBusy) return;
+    this.profileMenuOpen=false;
     this.clearTwoFactor(); this.twoFactorSettings=null;
     if(this.session) this.api.logout().subscribe({
       error:()=>this.showToast('La sesión se cerró localmente, pero no se pudo confirmar el cierre en el servidor.')
@@ -381,7 +387,13 @@ export class AppComponent implements OnInit {
   }
 
   /* ======================= Navegación ======================= */
+  @HostListener('document:click', ['$event'])
+  closeProfileMenuOnOutsideClick(event: MouseEvent){
+    if(!(event.target instanceof Element) || !event.target.closest('.account-menu')) this.profileMenuOpen=false;
+  }
+
   nav(page:Page){
+    this.profileMenuOpen=false;
     if (this.twoFactorBusy && (this.page==='two-factor' || this.page==='security-settings')) return;
     if (page !== this.page && this.twoFactorChallenge && (this.page==='two-factor' || this.page==='security-settings')) {
       // Leaving abandons this flow. No session has been created for a login challenge.

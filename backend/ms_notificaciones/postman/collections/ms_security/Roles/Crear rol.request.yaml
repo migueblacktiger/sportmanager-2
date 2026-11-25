@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/roles"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "ADMIN",
+      "description": "Administrador del sistema"
+    }
+order: 1000

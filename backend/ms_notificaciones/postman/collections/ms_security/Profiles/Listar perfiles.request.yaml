@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/profiles"
+method: GET
+order: 2000

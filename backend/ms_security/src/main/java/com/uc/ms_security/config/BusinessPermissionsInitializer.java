@@ -18,7 +18,7 @@ import com.uc.ms_security.service.AuthService;
 
 import lombok.RequiredArgsConstructor;
 
-/** Explicit, additive bootstrap for HU-GD-01 through HU-GD-05. */
+/** Explicit, additive bootstrap for the business API permission catalog. */
 @Component
 @RequiredArgsConstructor
 @Order(3)
@@ -48,7 +48,65 @@ public class BusinessPermissionsInitializer implements ApplicationRunner {
             new Definition("PlayerTeam", "/negocio/player-teams", "POST"),
             new Definition("PlayerTeam", "/negocio/player-teams/teams/{teamId}", "GET"),
             new Definition("PlayerTeam", "/negocio/player-teams/players/{playerId}", "GET"),
-            new Definition("PlayerTeam", "/negocio/player-teams/{id}/finish", "PATCH")
+            new Definition("PlayerTeam", "/negocio/player-teams/{id}/finish", "PATCH"),
+            new Definition("Tournament", "/negocio/tournaments", "POST"),
+            new Definition("Tournament", "/negocio/tournaments", "GET"),
+            new Definition("Tournament", "/negocio/tournaments/{id}", "GET"),
+            new Definition("Tournament", "/negocio/tournaments/{id}", "PATCH"),
+            new Definition("Tournament", "/negocio/tournaments/{id}", "DELETE"),
+            new Definition("TournamentOverview", "/negocio/tournaments/{tournamentId}/overview", "GET"),
+            new Definition("MatchResult", "/negocio/tournaments/{tournamentId}/matches/{matchId}/result", "POST"),
+            new Definition("MatchResult", "/negocio/tournaments/{tournamentId}/matches/{matchId}/result", "GET"),
+            new Definition("MatchResult", "/negocio/tournaments/{tournamentId}/matches/{matchId}/result", "PATCH"),
+            new Definition("MatchAnnotation", "/negocio/tournaments/{tournamentId}/matches/{matchId}/annotations", "POST"),
+            new Definition("MatchAnnotation", "/negocio/tournaments/{tournamentId}/matches/{matchId}/annotations", "GET"),
+            new Definition("MatchAnnotation", "/negocio/tournaments/{tournamentId}/matches/{matchId}/annotations/{id}", "GET"),
+            new Definition("MatchAnnotation", "/negocio/tournaments/{tournamentId}/matches/{matchId}/annotations/{id}", "PATCH"),
+            new Definition("MatchAnnotation", "/negocio/tournaments/{tournamentId}/matches/{matchId}/annotations/{id}", "DELETE"),
+            new Definition("MatchManagement", "/negocio/tournaments/{tournamentId}/phases/{phaseId}/matches", "POST"),
+            new Definition("MatchManagement", "/negocio/tournaments/{tournamentId}/phases/{phaseId}/matches", "GET"),
+            new Definition("MatchManagement", "/negocio/tournaments/{tournamentId}/matches", "GET"),
+            new Definition("MatchManagement", "/negocio/tournaments/{tournamentId}/matches/{id}", "GET"),
+            new Definition("MatchManagement", "/negocio/tournaments/{tournamentId}/matches/{id}", "PATCH"),
+            new Definition("MatchManagement", "/negocio/tournaments/{tournamentId}/matches/{id}", "DELETE"),
+            new Definition("MatchManagement", "/negocio/tournaments/{tournamentId}/matches/{id}/status", "PATCH"),
+            new Definition("MatchAttendance", "/negocio/matches/{matchId}/attendances", "POST"),
+            new Definition("MatchAttendance", "/negocio/matches/{matchId}/attendances", "GET"),
+            new Definition("MatchAttendance", "/negocio/matches/{matchId}/attendances/{fanId}", "DELETE"),
+            new Definition("MatchAudience", "/negocio/matches/{matchId}/audiences/tickets", "POST"),
+            new Definition("MatchAudience", "/negocio/matches/{matchId}/audiences/tickets", "GET"),
+            new Definition("MatchAudience", "/negocio/matches/{matchId}/audiences/tickets/{fanId}", "DELETE"),
+            new Definition("MatchAudience", "/negocio/matches/{matchId}/audiences/bets", "POST"),
+            new Definition("MatchAudience", "/negocio/matches/{matchId}/audiences/bets", "GET"),
+            new Definition("MatchAudience", "/negocio/matches/{matchId}/audiences/bets/{fanId}", "DELETE"),
+            new Definition("Venue", "/negocio/venues", "POST"),
+            new Definition("Venue", "/negocio/venues", "GET"),
+            new Definition("Venue", "/negocio/venues/{id}", "GET"),
+            new Definition("Venue", "/negocio/venues/{id}", "PATCH"),
+            new Definition("Venue", "/negocio/venues/{id}", "DELETE"),
+            new Definition("FinalPhase", "/negocio/tournaments/{tournamentId}/final-phases", "POST"),
+            new Definition("FinalPhase", "/negocio/tournaments/{tournamentId}/final-phases", "GET"),
+            new Definition("FinalPhase", "/negocio/tournaments/{tournamentId}/final-phases/{id}", "GET"),
+            new Definition("FinalPhase", "/negocio/tournaments/{tournamentId}/final-phases/{id}/matches", "GET"),
+            new Definition("FinalPhase", "/negocio/tournaments/{tournamentId}/final-phases/{id}", "PATCH"),
+            new Definition("FinalPhase", "/negocio/tournaments/{tournamentId}/final-phases/{id}", "DELETE"),
+            new Definition("Match", "/negocio/phases/{phaseId}/matches", "POST"),
+            new Definition("Match", "/negocio/phases/{phaseId}/matches", "GET"),
+            new Definition("Match", "/negocio/matches/{id}", "GET"),
+            new Definition("Match", "/negocio/matches/{id}", "DELETE"),
+            new Definition("CompetitionGroup", "/negocio/tournaments/{tournamentId}/phases/{phaseId}/groups", "POST"),
+            new Definition("CompetitionGroup", "/negocio/tournaments/{tournamentId}/phases/{phaseId}/groups", "GET"),
+            new Definition("CompetitionGroup", "/negocio/groups/{id}", "GET"),
+            new Definition("CompetitionGroup", "/negocio/groups/{id}", "PATCH"),
+            new Definition("CompetitionGroup", "/negocio/groups/{id}", "DELETE"),
+            new Definition("TournamentPhase", "/negocio/tournaments/{tournamentId}/phases", "POST"),
+            new Definition("TournamentPhase", "/negocio/tournaments/{tournamentId}/phases", "GET"),
+            new Definition("TournamentPhase", "/negocio/phases/{id}", "GET"),
+            new Definition("TournamentPhase", "/negocio/phases/{id}", "PATCH"),
+            new Definition("TournamentPhase", "/negocio/phases/{id}", "DELETE"),
+            new Definition("GroupTeam", "/negocio/groups/{groupId}/teams", "POST"),
+            new Definition("GroupTeam", "/negocio/groups/{groupId}/teams", "GET"),
+            new Definition("GroupTeam", "/negocio/groups/{groupId}/teams/{teamId}", "DELETE")
     );
 
     private final PermissionRepository permissionRepository;

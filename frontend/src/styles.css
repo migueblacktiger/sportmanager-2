@@ -7,6 +7,14 @@
 /* Integración con el backend: avisos de error, listas de roles, perfil y botones deshabilitados */
 .inline-notice.error{border:1px solid #8b3039;background:#210f18;color:#ff9aa4}.inline-notice.error span{color:#ff727d}
 .modal-card{max-height:calc(100vh - 40px);overflow:auto}
+.main-nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#37546c transparent}
+.account-menu{position:relative}
+.account-menu-trigger{display:flex;align-items:center;gap:10px;padding:0;border:0;background:transparent;color:inherit;text-align:left;font:inherit;cursor:pointer}
+.account-menu-trigger:focus-visible,.account-menu-panel button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.account-menu-chevron{color:#d6e0ec;font-size:18px;margin-left:4px}
+.account-menu-panel{position:absolute;top:calc(100% + 12px);right:0;z-index:30;min-width:180px;padding:6px;border:1px solid #20384d;border-radius:10px;background:#0a1726;box-shadow:0 12px 30px #0008}
+.account-menu-panel button{display:block;width:100%;padding:10px 12px;border:0;border-radius:6px;background:transparent;color:var(--text);text-align:left;cursor:pointer}
+.account-menu-panel button:hover{background:#12283a;color:var(--cyan)}
 .check-grid{display:flex;flex-wrap:wrap;gap:10px 18px;padding:12px;border:1px solid #293f53;border-radius:7px;background:#06111e}
 .check-grid .check-label{font-size:11px;color:#d5e0ea}
 .check-grid .muted{font-size:11px}
@@ -187,3 +195,8 @@
 @media (prefers-reduced-motion: reduce) {
   .password-recovery-card .recovery-field input { transition: none; }
 }
+/* Nuevo acceso agrupado: Gestión de competencias */
+.competition-subnav{display:grid;gap:3px;margin:2px 0 8px 27px;padding-left:10px;border-left:1px solid #29465a}
+.competition-subnav button{background:transparent;border:0;border-radius:6px;color:#91a8bd;text-align:left;padding:8px 9px;font-size:10px;cursor:pointer}
+.competition-subnav button:hover{background:#102a22;color:#62ec70}
+.nav-chevron{margin-left:auto;color:#8da5b9}

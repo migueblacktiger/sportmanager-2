@@ -1,0 +1,5 @@
+$kind: collection
+name: Cinema
+description: ""
+variables:
+  cinema_ms: ""

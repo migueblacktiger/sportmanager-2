@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{cinema_ms}}/theaters/1"
+method: GET
+order: 2000

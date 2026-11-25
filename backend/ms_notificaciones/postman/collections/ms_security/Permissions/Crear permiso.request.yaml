@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/permissions"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "url": "/api/users",
+      "method": "GET",
+      "model": "User"
+    }
+order: 1000

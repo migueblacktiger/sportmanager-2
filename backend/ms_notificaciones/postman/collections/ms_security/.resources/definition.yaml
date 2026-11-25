@@ -1,0 +1,9 @@
+$kind: collection
+description: Colección para el microservicio de seguridad (puerto 8181).
+variables:
+  baseUrl: http://localhost:8181
+  userId: "1"
+  sessionId: "1"
+  profileId: "1"
+  roleId: "1"
+  permissionId: "1"

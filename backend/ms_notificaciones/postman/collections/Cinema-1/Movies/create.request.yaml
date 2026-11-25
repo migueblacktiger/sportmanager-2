@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{cinema_ms}}/movies"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Interestelar\",\r
+
+    \  \"duration\": 169,\r
+
+    \  \"date\": \"2014-11-07\"\r
+
+    }"
+order: 3000

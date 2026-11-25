@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{cinema_ms}}/screenings/1"
+method: DELETE
+body:
+  type: json
+  content: "{\r
+
+    \  \"location\": \"Test\",\r
+
+    \  \"capacity\": 150\r
+
+    }"
+order: 5000

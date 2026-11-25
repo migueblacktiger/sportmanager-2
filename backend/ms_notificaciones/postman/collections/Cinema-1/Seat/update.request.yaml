@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{cinema_ms}}/seats/1"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \  \"location\": \"A1\",\r
+
+    \  \"reclining\": true,\r
+
+    \  \"theaterId\": 3\r
+
+    }"
+order: 4000

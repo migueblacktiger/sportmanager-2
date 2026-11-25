@@ -5,6 +5,8 @@
 **/dist/
 **/build/
 **/coverage/
+__pycache__/
+*.py[cod]
 
 # Local environment and editor files
 .env

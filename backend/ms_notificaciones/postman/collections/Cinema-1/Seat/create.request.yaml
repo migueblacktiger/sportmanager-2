@@ -1,0 +1,15 @@
+$kind: http-request
+url: "{{cinema_ms}}/seats"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"location\": \"A1\",\r
+
+    \  \"reclining\": true,\r
+
+    \  \"theaterId\": 1\r
+
+    }"
+order: 3000

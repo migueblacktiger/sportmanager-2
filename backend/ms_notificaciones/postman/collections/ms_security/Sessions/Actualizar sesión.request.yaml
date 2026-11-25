@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/users/{{userId}}/sessions/{{sessionId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "token": "token-computador-personal",
+      "expiration": "2026-12-30T10:00:00",
+      "code2FA": "794215"
+    }
+order: 4000

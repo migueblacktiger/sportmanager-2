@@ -1,0 +1,4 @@
+$kind: http-request
+url: "{{baseUrl}}/api/permissions/{{permissionId}}"
+method: GET
+order: 3000

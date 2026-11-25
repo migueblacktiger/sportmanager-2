@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{baseUrl}}/api/roles/{{roleId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "ADMIN",
+      "description": "Administrador actualizado"
+    }
+order: 4000

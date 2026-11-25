@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/permissions/{{permissionId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "url": "/api/users",
+      "method": "POST",
+      "model": "User"
+    }
+order: 4000

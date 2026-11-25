@@ -6,6 +6,15 @@
       <button [class.active]="page==='dashboard'||page==='home'" (click)="nav('dashboard')"><span>⌂</span> Dashboard</button>
       <button [class.active]="page==='teams'" (click)="nav('teams')"><span>♧</span> Equipos</button>
       <button [class.active]="page==='tournaments'" (click)="nav('tournaments')"><span>♜</span> Torneos</button>
+      <button [class.active]="page==='competitions'" (click)="competitionMenuOpen=!competitionMenuOpen; nav('competitions')"><span>🏆</span> Gestión de competencias <span class="nav-chevron">⌄</span></button>
+      <div class="competition-subnav" *ngIf="competitionMenuOpen || page==='competitions'">
+        <button (click)="openCompetitionSection('phases')">Fases del torneo</button>
+        <button (click)="openCompetitionSection('groups')">Grupos de competencia</button>
+        <button (click)="openCompetitionSection('finals')">Fases finales</button>
+        <button (click)="openCompetitionSection('matches')">Gestión de partidos</button>
+        <button (click)="openCompetitionSection('results')">Resultados y anotaciones</button>
+        <button (click)="openCompetitionSection('overview')">Desarrollo del torneo</button>
+      </div>
       <button [class.active]="page==='registrations'" (click)="nav('registrations')"><span>☷</span> Inscripciones</button>
       <button [class.active]="page==='players'" (click)="nav('players')"><span>♙</span> Jugadores</button>
       <button [class.active]="page==='player-skills'" (click)="nav('player-skills')"><span>✦</span> Habilidades de jugadores</button>
@@ -18,7 +27,25 @@
     <div class="sidebar-bottom"><div class="season"><span class="green-dot"></span><div><small>Temporada activa</small><b>2026</b></div><span class="chevron">⌄</span></div><div class="session"><span class="avatar small-avatar">{{myInitials}}</span><div><b>{{displayName}}</b><small>{{displayRole}}</small></div><span class="online-dot" *ngIf="session"></span></div></div>
   </aside>
   <main class="main-area">
-    <header class="topbar"><button class="hamburger" (click)="mobileMenu=!mobileMenu">☰</button><div class="breadcrumb"><span>SportManager</span><span>/</span><b>{{page==='role-permissions'?'Asignar permisos':page==='sports'?'Deportes':page==='tournaments'?'Torneos':page==='registrations'?'Inscripciones':page==='player-skills'?'Habilidades de jugadores':page==='player-sports-profile'?'Perfil deportivo del jugador':page==='users'?'Usuarios':page==='roles'?'Roles':page==='permissions'?'Permisos':page==='login'?'Iniciar sesión':page==='register'?'Crear cuenta':page==='reset-password'?'Nueva contraseña':page==='forgot'?'Recuperar contraseña':page==='verify-email'?'Verificar correo':page==='home'?'Inicio':page==='teams'?'Equipos':page==='players'?'Jugadores':page==='security-settings'?'Seguridad de cuenta':page==='two-factor'?'Verificación 2FA':page==='profile'?'Perfil deportivo':'Dashboard'}}</b></div><div class="top-actions"><button class="icon-button" (click)="showToast('No tienes notificaciones nuevas.')">♧<span class="notification-dot">3</span></button><div class="top-user" *ngIf="session"><span class="avatar">{{myInitials}}</span><span><b>{{displayName}}</b><small>{{displayRole}}</small></span><button class="plain" title="Cerrar sesión" (click)="logout()">⌄</button></div><div class="top-user" *ngIf="!session"><button class="btn btn-outline" (click)="nav('login')">Iniciar sesión</button></div></div></header>
+    <header class="topbar">
+      <button class="hamburger" (click)="mobileMenu=!mobileMenu">☰</button>
+      <div class="breadcrumb"><span>SportManager</span><span>/</span><b>{{page==='role-permissions'?'Asignar permisos':page==='sports'?'Deportes':page==='tournaments'?'Torneos':page==='competitions'?'Gestión de competencias':page==='registrations'?'Inscripciones':page==='player-skills'?'Habilidades de jugadores':page==='player-sports-profile'?'Perfil deportivo del jugador':page==='users'?'Usuarios':page==='roles'?'Roles':page==='permissions'?'Permisos':page==='login'?'Iniciar sesión':page==='register'?'Crear cuenta':page==='reset-password'?'Nueva contraseña':page==='forgot'?'Recuperar contraseña':page==='verify-email'?'Verificar correo':page==='home'?'Inicio':page==='teams'?'Equipos':page==='players'?'Jugadores':page==='security-settings'?'Seguridad de cuenta':page==='two-factor'?'Verificación 2FA':page==='profile'?'Perfil deportivo':'Dashboard'}}</b></div>
+      <div class="top-actions">
+        <button class="icon-button" (click)="showToast('No tienes notificaciones nuevas.')">♧<span class="notification-dot">3</span></button>
+        <div class="top-user account-menu" *ngIf="session">
+          <button type="button" class="account-menu-trigger" aria-haspopup="menu" [attr.aria-expanded]="profileMenuOpen" aria-controls="account-menu" (click)="profileMenuOpen=!profileMenuOpen">
+            <span class="avatar">{{myInitials}}</span>
+            <span><b>{{displayName}}</b><small>{{displayRole}}</small></span>
+            <span class="account-menu-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="account-menu-panel" id="account-menu" role="menu" *ngIf="profileMenuOpen">
+            <button type="button" role="menuitem" (click)="nav('profile')">Ver perfil</button>
+            <button type="button" role="menuitem" (click)="logout()">Cerrar sesión</button>
+          </div>
+        </div>
+        <div class="top-user" *ngIf="!session"><button class="btn btn-outline" (click)="nav('login')">Iniciar sesión</button></div>
+      </div>
+    </header>
     <section class="page-content">
       <ng-template #twoFactorCodeForm>
         <ng-container *ngIf="twoFactorChallenge as challenge">
@@ -212,6 +239,7 @@
       <app-players-management *ngIf="page==='players'"></app-players-management>
       <app-player-skills-management *ngIf="page==='player-skills'"></app-player-skills-management>
       <app-player-sports-profile *ngIf="page==='player-sports-profile'"></app-player-sports-profile>
+      <app-competitions-management *ngIf="page==='competitions'" [initialSection]="competitionSection"></app-competitions-management>
       <section *ngIf="page==='profile'" class="profile-page"><div class="page-heading"><div><span class="eyebrow">MI CUENTA</span><h1>Mi perfil deportivo</h1><p>Mantén actualizados tus datos personales.</p></div></div><div class="panel profile-panel"><div class="profile-head"><span class="avatar big-avatar">{{myInitials}}</span><div><h3>{{displayName}}</h3><small class="muted">{{displayRole}}</small></div></div><div class="inline-notice error" *ngIf="profileError"><span>⚠</span>{{profileError}}</div><div class="form-grid"><div class="form-field"><label>Nombre completo <b>*</b></label><input [(ngModel)]="profileForm.name" placeholder="Tu nombre"></div><div class="form-field"><label>Correo electrónico <b>*</b></label><input [(ngModel)]="profileForm.email" type="email" placeholder="nombre@correo.com"></div><div class="form-field"><label>Teléfono</label><input [(ngModel)]="profileForm.phone" placeholder="Ej. 3001234567"></div><div class="form-field"><label>Fecha de nacimiento</label><input [(ngModel)]="profileForm.birthDate" type="date"></div><div class="form-field full-field"><label>Nueva contraseña (opcional)</label><input [(ngModel)]="profileForm.password" type="password" placeholder="Déjala vacía para conservar la actual"><small>Mínimo 8 caracteres</small></div><div class="form-field full-field"><label>Contraseña actual (para cambiar correo o contraseña)</label><input [(ngModel)]="profileForm.currentPassword" type="password" autocomplete="current-password" placeholder="Solo para cuentas con contraseña"><small>Con 2FA activo, desactívalo con su código antes de cambiar el correo.</small></div></div><div class="modal-actions"><button class="btn btn-primary" [disabled]="saving" (click)="saveMyProfile()">▣ Guardar cambios</button></div></div></section>
     </section>
     <footer class="footer"><span>© 2026 SportManager</span><span>Hecho para impulsar el deporte <b>✦</b></span><span class="environment">{{session?'CONECTADO · API':'SIN SESIÓN'}}</span></footer>

@@ -1,0 +1,14 @@
+$kind: http-request
+url: "{{baseUrl}}/api/profiles"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "userId": 1,
+      "phone": "3001234567",
+      "birthDate": "1998-05-21"
+    }
+order: 1000
