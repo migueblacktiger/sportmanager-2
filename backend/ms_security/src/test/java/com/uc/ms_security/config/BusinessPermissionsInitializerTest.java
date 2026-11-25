@@ -21,7 +21,7 @@ import com.uc.ms_security.repository.RoleRepository;
 import com.uc.ms_security.service.AuthService;
 
 class BusinessPermissionsInitializerTest {
-    private static final int CURRENT_CATALOG_SIZE = 81;
+    private static final int CURRENT_CATALOG_SIZE = 90;
     private static final Map<String, String> EXPECTED = Map.ofEntries(
             Map.entry("POST /negocio/sports", "Sport"),
             Map.entry("GET /negocio/sports", "Sport"),
@@ -42,6 +42,15 @@ class BusinessPermissionsInitializerTest {
             Map.entry("GET /negocio/players/{id}", "Player"),
             Map.entry("PATCH /negocio/players/{id}", "Player"),
             Map.entry("DELETE /negocio/players/{id}", "Player"),
+            Map.entry("POST /negocio/habilidades", "Skill"),
+            Map.entry("GET /negocio/habilidades", "Skill"),
+            Map.entry("GET /negocio/habilidades/{id}", "Skill"),
+            Map.entry("PATCH /negocio/habilidades/{id}", "Skill"),
+            Map.entry("DELETE /negocio/habilidades/{id}", "Skill"),
+            Map.entry("POST /negocio/player-skills", "PlayerSkill"),
+            Map.entry("GET /negocio/player-skills/players/{playerId}", "PlayerSkill"),
+            Map.entry("GET /negocio/player-skills/skills/{skillId}", "PlayerSkill"),
+            Map.entry("DELETE /negocio/player-skills/{playerId}/{skillId}", "PlayerSkill"),
             Map.entry("POST /negocio/player-teams", "PlayerTeam"),
             Map.entry("GET /negocio/player-teams/teams/{teamId}", "PlayerTeam"),
             Map.entry("GET /negocio/player-teams/players/{playerId}", "PlayerTeam"),
@@ -110,11 +119,14 @@ class BusinessPermissionsInitializerTest {
     }
 
     @Test
-    void createsTheCurrentCatalogAndAssignsTournamentPermissionsToTheNamedAdministrator() {
+    void createsTheCurrentCatalogAndAssignsBusinessPermissionsToTheNamedAdministrator() {
         seed();
         assertEquals(EXPECTED, permissionModels(EXPECTED));
         assertEquals(CURRENT_CATALOG_SIZE, permissions.size());
         assertEquals(CURRENT_CATALOG_SIZE, assignments.size());
+        assertEquals("Skill", permissions.get("GET /negocio/habilidades").getModel());
+        assertEquals("PlayerSkill", permissions.get(
+                "GET /negocio/player-skills/players/{playerId}").getModel());
         assertEquals("Tournament", permissions.get("POST /negocio/tournaments").getModel());
         assertEquals("Tournament", permissions.get("GET /negocio/tournaments").getModel());
         assertEquals("Tournament", permissions.get("GET /negocio/tournaments/{id}").getModel());

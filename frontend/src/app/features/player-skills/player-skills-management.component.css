@@ -47,5 +47,52 @@
 .player-skills-notice.success{border-color:#27784e;background:#0d2b23;color:#b4ecc7}
 .player-skills-notice.error{border-color:#8b3039;background:#28121d;color:#ffbcc5}
 .player-skills-notice button{border:0;border-bottom:1px solid currentColor;background:transparent;color:inherit}
+.player-skills-header-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:9px}
+.manage-skills-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:10px 15px;border:1px solid #08db61;border-radius:7px;background:#08ce5c;color:#04170d;font-size:11px;font-weight:700}
+.manage-skills-button:hover:not(:disabled){background:#20e977}
+.manage-skills-button:disabled,.catalog-action:disabled{cursor:not-allowed;opacity:.55}
+.skill-catalog-backdrop{position:fixed;z-index:1000;inset:0;display:grid;place-items:center;padding:24px;background:rgba(2,8,16,.82);backdrop-filter:blur(5px)}
+.skill-catalog-dialog{display:grid;grid-template-rows:auto auto auto minmax(0,1fr);gap:16px;width:min(1080px,100%);max-height:min(820px,calc(100vh - 48px));overflow:hidden;padding:22px;border:1px solid #155285;border-radius:14px;background:linear-gradient(145deg,#071524,#091a2b 62%,#071321);box-shadow:0 24px 80px rgba(0,0,0,.58)}
+.skill-catalog-header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.skill-catalog-header h2{margin:6px 0;font-size:22px;letter-spacing:-.4px}
+.skill-catalog-header p{margin:0;color:#9cacc0;font-size:11px;line-height:1.6}
+.catalog-close-button{flex:0 0 34px;width:34px;height:34px;border:1px solid #30475b;border-radius:7px;background:#102133;color:#dce7f1;font-size:23px;line-height:1}
+.skill-catalog-toolbar{display:flex;align-items:center;gap:12px}
+.catalog-search{display:flex;align-items:center;gap:9px;min-width:200px;max-width:340px;flex:1;padding:0 12px;border:1px solid #29445e;border-radius:7px;background:#061221;color:#63b7f5}
+.catalog-search input{width:100%;min-height:40px;border:0;outline:0;background:transparent;color:#e5eef6;font-size:11px}
+.catalog-search input::placeholder{color:#8093a7}
+.catalog-count{color:#58b7ff;font-size:10px;white-space:nowrap}
+.skill-catalog-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(250px,.8fr);gap:16px;min-height:0}
+.skill-catalog-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;gap:10px;overflow:auto;padding:2px 6px 2px 2px}
+.catalog-skill-card{min-width:0;padding:12px;border:1px solid #193f63;border-radius:9px;background:rgba(7,24,41,.86)}
+.catalog-skill-card.selected{border-color:#0bbd61;box-shadow:0 0 0 1px rgba(11,189,97,.25)}
+.catalog-skill-summary{display:flex;align-items:center;gap:9px;width:100%;padding:0;border:0;background:transparent;text-align:left;cursor:pointer}
+.catalog-skill-copy{display:grid;min-width:0;gap:5px}
+.catalog-skill-copy strong{overflow:hidden;color:#e5edf5;font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.catalog-skill-copy small{display:-webkit-box;overflow:hidden;color:#92a7bb;font-size:9px;line-height:1.5;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.catalog-skill-actions,.catalog-detail-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.catalog-action{min-height:29px;padding:6px 9px;border:1px solid #174b72;border-radius:6px;background:#081c30;color:#57baff;font-size:9px}
+.catalog-action:hover:not(:disabled){background:#102b45}
+.catalog-action.edit-action{border-color:#285c87;color:#7dc7ff}
+.catalog-action.delete-action{border-color:#713b43;background:#211822;color:#ff9ba7}
+.catalog-action.delete-action:hover:not(:disabled){background:#351d29}
+.skill-catalog-detail{min-width:0;overflow:auto;padding:16px;border:1px solid #1c4265;border-radius:9px;background:rgba(5,19,33,.88)}
+.catalog-detail-heading{display:flex;align-items:center;gap:11px;margin-bottom:19px}
+.catalog-detail-heading h3{margin:0 0 5px;color:#e5edf5;font-size:14px;overflow-wrap:anywhere}
+.catalog-detail-heading p{margin:0;color:#91a7bb;font-size:9px}
+.catalog-description{padding:13px;border:1px solid #203e5a;border-radius:8px;background:#071727}
+.catalog-description h4{margin:0 0 8px;color:#d7e2ec;font-size:10px}
+.catalog-description p{margin:0;color:#a8b8c8;font-size:10px;line-height:1.7;overflow-wrap:anywhere;white-space:pre-wrap}
+.skill-editor-form{display:grid;gap:2px}
+.skill-editor-form .player-skills-field input,.skill-editor-form .player-skills-field textarea{width:100%;padding:11px 12px;border:1px solid #30485d;border-radius:7px;background:#071321;color:#e5eef6;font:inherit;font-size:11px}
+.skill-editor-form .player-skills-field textarea{resize:vertical;line-height:1.6}
+.skill-editor-form .player-skills-field b{color:#ff8792}
+.skill-editor-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.catalog-detail-empty{display:grid;justify-items:center;gap:10px;padding:36px 12px;text-align:center}
+.catalog-detail-empty .skill-summary-icon{width:44px;height:44px}
+.catalog-detail-empty strong{color:#dce6ef;font-size:11px}
+.catalog-detail-empty>span:last-child{color:#91a7bb;font-size:9px;line-height:1.6}
+.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;clip-path:inset(50%)}
 @media(max-width:850px){.player-skills-grid{grid-template-columns:1fr}}
-@media(max-width:600px){.player-skills-header{align-items:flex-start;flex-direction:column}.player-skills-header>.player-skills-refresh{width:100%}.player-skills-card{padding:16px}.assign-form{grid-template-columns:1fr}.assign-button{width:100%}}
+@media(max-width:760px){.skill-catalog-layout{grid-template-columns:1fr;grid-template-rows:minmax(180px,1fr) auto}.skill-catalog-detail{max-height:300px}}
+@media(max-width:600px){.player-skills-header{align-items:flex-start;flex-direction:column}.player-skills-header-actions{width:100%;flex-direction:column}.player-skills-header-actions>button{width:100%}.player-skills-card{padding:16px}.assign-form{grid-template-columns:1fr}.assign-button{width:100%}.skill-catalog-backdrop{padding:9px}.skill-catalog-dialog{gap:12px;max-height:calc(100vh - 18px);padding:15px}.skill-catalog-header h2{font-size:18px}.skill-catalog-toolbar{flex-wrap:wrap}.catalog-search{flex-basis:100%;max-width:none;order:1}.skill-catalog-layout{grid-template-rows:minmax(180px,1fr) auto}.skill-catalog-list{grid-template-columns:1fr;max-height:35vh}.skill-catalog-detail{max-height:40vh}.catalog-count{margin-right:auto}.skill-editor-actions{flex-direction:column-reverse}.skill-editor-actions>button{width:100%}}

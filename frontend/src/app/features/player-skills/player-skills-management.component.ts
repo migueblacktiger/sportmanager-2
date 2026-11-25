@@ -23,6 +23,17 @@ export class PlayerSkillsManagementComponent implements OnInit {
   skills: SkillDto[] = [];
   playerSkills: PlayerSkillDto[] = [];
   skillPlayers: PlayerDto[] = [];
+  catalogOpen = false;
+  skillSearch = '';
+  selectedCatalogSkillId: number | null = null;
+  skillFormOpen = false;
+  editingSkillId: number | null = null;
+  skillName = '';
+  skillDescription = '';
+  catalogError = '';
+  catalogSuccess = '';
+  savingSkill = false;
+  removingSkillId: number | null = null;
   playerId: number | null = null;
   skillId: number | null = null;
   assignmentSkillId: number | null = null;
@@ -39,6 +50,22 @@ export class PlayerSkillsManagementComponent implements OnInit {
   get busy(): boolean {
     return this.loadingCatalog || this.loadingPlayerSkills || this.loadingSkillPlayers
       || this.assigning || this.removingPlayerSkillId !== null;
+  }
+
+  get catalogBusy(): boolean {
+    return this.loadingCatalog || this.savingSkill || this.removingSkillId !== null;
+  }
+
+  get filteredSkills(): SkillDto[] {
+    const query = this.skillSearch.trim().toLocaleLowerCase();
+    if (!query) return this.skills;
+    return this.skills.filter(skill =>
+      `${skill.name} ${skill.description ?? ''}`.toLocaleLowerCase().includes(query),
+    );
+  }
+
+  get selectedCatalogSkill(): SkillDto | undefined {
+    return this.skills.find(skill => skill.id === this.selectedCatalogSkillId);
   }
 
   get selectedPlayer(): PlayerDto | undefined {
@@ -69,10 +96,17 @@ export class PlayerSkillsManagementComponent implements OnInit {
       }));
       this.players = result.players;
       this.skills = result.skills;
+      if (this.catalogOpen && this.selectedCatalogSkillId === null && this.skills.length) {
+        this.selectedCatalogSkillId = this.skills[0].id;
+      }
       if (this.playerId && !this.players.some(player => player.id === this.playerId)) {
         this.playerId = null;
         this.assignmentSkillId = null;
         this.playerSkills = [];
+      }
+      if (this.selectedCatalogSkillId !== null
+        && !this.skills.some(skill => skill.id === this.selectedCatalogSkillId)) {
+        this.selectedCatalogSkillId = null;
       }
       if (this.skillId && !this.skills.some(skill => skill.id === this.skillId)) {
         this.skillId = null;
@@ -80,7 +114,112 @@ export class PlayerSkillsManagementComponent implements OnInit {
       }
     } catch (error: unknown) {
       this.error = this.errorMessage(error);
+      if (this.catalogOpen) this.catalogError = this.error;
     } finally { this.loadingCatalog = false; }
+  }
+
+  openSkillCatalog(): void {
+    this.catalogOpen = true;
+    this.skillSearch = '';
+    this.catalogError = '';
+    this.catalogSuccess = '';
+    this.cancelSkillEdit();
+    this.selectedCatalogSkillId = this.skills[0]?.id ?? null;
+    void this.loadCatalogs();
+  }
+
+  closeSkillCatalog(): void {
+    this.catalogOpen = false;
+    this.cancelSkillEdit();
+  }
+
+  selectCatalogSkill(skill: SkillDto): void {
+    this.selectedCatalogSkillId = skill.id;
+    this.catalogError = '';
+    this.catalogSuccess = '';
+    this.cancelSkillEdit();
+  }
+
+  startNewSkill(): void {
+    this.selectedCatalogSkillId = null;
+    this.editingSkillId = null;
+    this.skillName = '';
+    this.skillDescription = '';
+    this.skillFormOpen = true;
+    this.catalogError = '';
+    this.catalogSuccess = '';
+  }
+
+  editSkill(skill: SkillDto): void {
+    this.selectedCatalogSkillId = skill.id;
+    this.editingSkillId = skill.id;
+    this.skillName = skill.name;
+    this.skillDescription = skill.description ?? '';
+    this.skillFormOpen = true;
+    this.catalogError = '';
+    this.catalogSuccess = '';
+  }
+
+  cancelSkillEdit(): void {
+    this.skillFormOpen = false;
+    this.editingSkillId = null;
+    this.skillName = '';
+    this.skillDescription = '';
+  }
+
+  async saveSkill(): Promise<void> {
+    const name = this.skillName.trim();
+    if (this.catalogBusy || !name) return;
+    const request = {
+      name,
+      description: this.skillDescription.trim() || null,
+    };
+    const editingId = this.editingSkillId;
+    this.savingSkill = true;
+    this.catalogError = '';
+    this.catalogSuccess = '';
+    try {
+      const saved = await firstValueFrom(
+        editingId === null
+          ? this.skillsApi.create(request)
+          : this.skillsApi.update(editingId, request),
+      );
+      this.skills = this.skills.some(skill => skill.id === saved.id)
+        ? this.skills.map(skill => skill.id === saved.id ? saved : skill)
+        : [...this.skills, saved];
+      this.playerSkills = this.playerSkills.map(association =>
+        association.skillId === saved.id ? { ...association, skill: saved } : association,
+      );
+      this.selectedCatalogSkillId = saved.id;
+      this.cancelSkillEdit();
+      this.catalogSuccess = editingId === null
+        ? 'Habilidad creada correctamente.'
+        : 'Habilidad actualizada correctamente.';
+    } catch (error: unknown) {
+      this.catalogError = this.skillsApi.errorMessage(error);
+    } finally { this.savingSkill = false; }
+  }
+
+  async deleteSkill(skill: SkillDto): Promise<void> {
+    if (this.catalogBusy) return;
+    if (!window.confirm(
+      `¿Eliminar «${skill.name}»? Si está asociada a jugadores, el sistema impedirá eliminarla.`,
+    )) return;
+    this.removingSkillId = skill.id;
+    this.catalogError = '';
+    this.catalogSuccess = '';
+    try {
+      await firstValueFrom(this.skillsApi.remove(skill.id));
+      this.skills = this.skills.filter(item => item.id !== skill.id);
+      if (this.selectedCatalogSkillId === skill.id) this.selectedCatalogSkillId = null;
+      if (this.skillId === skill.id) {
+        this.skillId = null;
+        this.skillPlayers = [];
+      }
+      this.catalogSuccess = 'Habilidad eliminada correctamente.';
+    } catch (error: unknown) {
+      this.catalogError = this.skillsApi.errorMessage(error);
+    } finally { this.removingSkillId = null; }
   }
 
   async selectPlayer(): Promise<void> {

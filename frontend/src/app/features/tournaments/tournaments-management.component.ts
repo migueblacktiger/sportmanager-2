@@ -48,18 +48,29 @@ export class TournamentsManagementComponent implements OnInit {
         .toLocaleLowerCase('es').includes(query));
   }
 
-  get validFields(): boolean {
-    if (!this.form.name.trim() || [...this.form.name].length > 180
-        || this.form.sportId === null || !Number.isInteger(this.form.sportId)
-        || this.form.sportId < 1) return false;
-    const registrationStartsAt = Date.parse(this.form.registrationStartsAt);
-    const registrationEndsAt = Date.parse(this.form.registrationEndsAt);
-    const startsAt = Date.parse(this.form.startsAt);
-    return Number.isFinite(registrationStartsAt) && Number.isFinite(registrationEndsAt)
-      && Number.isFinite(startsAt)
-      && registrationStartsAt < registrationEndsAt
-      && registrationEndsAt <= startsAt;
+  get validationMessage(): string {
+    if (!this.form.name.trim()) return 'Ingresa el nombre del torneo.';
+    if ([...this.form.name].length > 180) return 'El nombre no puede superar 180 caracteres.';
+    if (this.form.sportId === null || !Number.isInteger(this.form.sportId) || this.form.sportId < 1) {
+      return 'Selecciona un deporte.';
+    }
+
+    const registrationStartsAt = this.parseLocalDateTime(this.form.registrationStartsAt);
+    if (registrationStartsAt === null) return 'Completa la fecha y hora de inicio de inscripciones.';
+    const registrationEndsAt = this.parseLocalDateTime(this.form.registrationEndsAt);
+    if (registrationEndsAt === null) return 'Completa la fecha y hora de cierre de inscripciones.';
+    const startsAt = this.parseLocalDateTime(this.form.startsAt);
+    if (startsAt === null) return 'Completa la fecha y hora de inicio del torneo.';
+    if (registrationStartsAt >= registrationEndsAt) {
+      return 'El inicio de inscripciones debe ser anterior a su cierre.';
+    }
+    if (registrationEndsAt > startsAt) {
+      return 'El cierre de inscripciones debe ser anterior o igual al inicio del torneo.';
+    }
+    return '';
   }
+
+  get validFields(): boolean { return this.validationMessage === ''; }
 
   trackId(_index: number, tournament: TournamentDto): number { return tournament.id; }
   sportName(sportId: number): string {
@@ -130,8 +141,12 @@ export class TournamentsManagementComponent implements OnInit {
   cancelEditor(event: Event): void { if (this.saving) event.preventDefault(); }
 
   async save(): Promise<void> {
-    if (this.saving || !this.validFields || this.formDirective?.invalid
-        || this.form.sportId === null) return;
+    if (this.saving) return;
+    if (!this.validFields) {
+      this.formError = this.validationMessage;
+      return;
+    }
+    if (this.form.sportId === null) return;
     this.formError = '';
     this.saving = true;
     const body: SaveTournamentRequest = {
@@ -189,6 +204,12 @@ export class TournamentsManagementComponent implements OnInit {
       registrationEndsAt: '',
       startsAt: '',
     };
+  }
+
+  private parseLocalDateTime(value: string): number | null {
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?$/.test(value)) return null;
+    const timestamp = Date.parse(value);
+    return Number.isFinite(timestamp) ? timestamp : null;
   }
 
   private toLocalInput(utc: string): string {

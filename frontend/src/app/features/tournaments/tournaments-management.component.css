@@ -58,6 +58,7 @@
 .tournament-dialog fieldset b{color:var(--cyan)}
 .tournament-dialog input,.tournament-dialog select{font-size:12px}
 .date-rule{margin:17px 0 0;color:#92aabd;font-size:10px;line-height:1.6}
+.date-rule.invalid{color:#ff9aa4}
 .tournament-dialog footer{display:flex;justify-content:flex-end;gap:10px;padding:17px 26px;border-top:1px solid #263b4e;background:#0c1d2e}
 .dialog-cancel{min-height:40px;padding:10px 16px;border:1px solid #344b60;border-radius:7px;background:transparent;color:#b5c6d7;font-size:11px}
 .tournament-dialog button:disabled{cursor:not-allowed;opacity:.5}

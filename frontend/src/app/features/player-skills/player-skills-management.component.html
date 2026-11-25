@@ -5,9 +5,14 @@
       <h1 id="player-skills-title">Habilidades de jugadores</h1>
       <p>Asigna habilidades y consulta los jugadores asociados, sin modificar los catálogos.</p>
     </div>
-    <button type="button" class="player-skills-refresh" [disabled]="busy" (click)="loadCatalogs()">
-      {{loadingCatalog ? 'Cargando…' : 'Actualizar catálogos'}}
-    </button>
+    <div class="player-skills-header-actions">
+      <button type="button" class="player-skills-refresh" [disabled]="busy" (click)="loadCatalogs()">
+        {{loadingCatalog ? 'Cargando…' : 'Actualizar catálogos'}}
+      </button>
+      <button type="button" class="manage-skills-button" (click)="openSkillCatalog()">
+        <span aria-hidden="true">＋</span> Gestionar habilidades
+      </button>
+    </div>
   </header>
 
   <p *ngIf="success" class="player-skills-notice success" role="status">{{success}}</p>
@@ -118,6 +123,125 @@
       </ng-container>
       <div *ngIf="!loadingCatalog && !skills.length" class="player-skills-empty">
         <strong>No hay habilidades registradas</strong><span>El catálogo de habilidades todavía está vacío.</span>
+      </div>
+    </section>
+  </div>
+
+  <div *ngIf="catalogOpen" class="skill-catalog-backdrop" (click)="closeSkillCatalog()">
+    <section class="skill-catalog-dialog" role="dialog" aria-modal="true"
+      aria-labelledby="skill-catalog-title" (click)="$event.stopPropagation()">
+      <header class="skill-catalog-header">
+        <div>
+          <span class="eyebrow">CATÁLOGO DE CAPACIDADES</span>
+          <h2 id="skill-catalog-title">Gestión de habilidades</h2>
+          <p>Registra, consulta y mantén las habilidades disponibles para los jugadores.</p>
+        </div>
+        <button type="button" class="catalog-close-button" aria-label="Cerrar catálogo"
+          (click)="closeSkillCatalog()">×</button>
+      </header>
+
+      <p *ngIf="catalogSuccess" class="player-skills-notice success" role="status">{{catalogSuccess}}</p>
+      <p *ngIf="catalogError" class="player-skills-notice error" role="alert">{{catalogError}}</p>
+
+      <div class="skill-catalog-toolbar">
+        <label class="catalog-search">
+          <span class="visually-hidden">Buscar habilidad</span>
+          <span aria-hidden="true">⌕</span>
+          <input type="search" name="skillSearch" [(ngModel)]="skillSearch"
+            placeholder="Buscar habilidad" [disabled]="catalogBusy">
+        </label>
+        <span class="catalog-count">{{skills.length}} {{skills.length === 1 ? 'habilidad' : 'habilidades'}}</span>
+        <button type="button" class="manage-skills-button" [disabled]="catalogBusy" (click)="startNewSkill()">
+          <span aria-hidden="true">＋</span> Nueva habilidad
+        </button>
+      </div>
+
+      <p *ngIf="loadingCatalog" class="player-skills-loading" role="status">Actualizando catálogo…</p>
+
+      <div class="skill-catalog-layout">
+        <section class="skill-catalog-list" aria-label="Catálogo de habilidades">
+          <div *ngIf="!loadingCatalog && !filteredSkills.length" class="player-skills-empty">
+            <strong>{{skills.length ? 'No se encontraron habilidades' : 'Aún no hay habilidades'}}</strong>
+            <span>{{skills.length ? 'Prueba con otro término de búsqueda.' : 'Registra la primera habilidad para comenzar.'}}</span>
+          </div>
+          <article *ngFor="let skill of filteredSkills; trackBy: trackSkill"
+            class="catalog-skill-card" [class.selected]="selectedCatalogSkillId === skill.id">
+            <button type="button" class="catalog-skill-summary" (click)="selectCatalogSkill(skill)">
+              <span class="skill-summary-icon" aria-hidden="true">✦</span>
+              <span class="catalog-skill-copy">
+                <strong>{{skill.name}}</strong>
+                <small>{{skill.description || 'Sin descripción'}}</small>
+              </span>
+            </button>
+            <div class="catalog-skill-actions">
+              <button type="button" class="catalog-action view-action" (click)="selectCatalogSkill(skill)"
+                [attr.aria-label]="'Ver ' + skill.name">Ver</button>
+              <button type="button" class="catalog-action edit-action" [disabled]="catalogBusy"
+                (click)="editSkill(skill)" [attr.aria-label]="'Editar ' + skill.name">Editar</button>
+              <button type="button" class="catalog-action delete-action" [disabled]="catalogBusy"
+                (click)="deleteSkill(skill)"
+                [attr.aria-label]="removingSkillId === skill.id ? 'Eliminando ' + skill.name : 'Eliminar ' + skill.name">
+                {{removingSkillId === skill.id ? 'Eliminando…' : 'Eliminar'}}
+              </button>
+            </div>
+          </article>
+        </section>
+
+        <aside class="skill-catalog-detail">
+          <form *ngIf="skillFormOpen; else skillDetails" class="skill-editor-form" (ngSubmit)="saveSkill()">
+            <div class="catalog-detail-heading">
+              <span class="skill-summary-icon" aria-hidden="true">✦</span>
+              <div>
+                <h3>{{editingSkillId === null ? 'Registrar habilidad' : 'Editar habilidad'}}</h3>
+                <p>Completa la información del catálogo.</p>
+              </div>
+            </div>
+            <label class="player-skills-field">
+              <span>Nombre <b aria-hidden="true">*</b></span>
+              <input type="text" name="skillName" [(ngModel)]="skillName" maxlength="180"
+                autocomplete="off" required placeholder="Ej. Velocidad" [disabled]="catalogBusy">
+            </label>
+            <label class="player-skills-field">
+              <span>Descripción</span>
+              <textarea name="skillDescription" [(ngModel)]="skillDescription" rows="5"
+                maxlength="65535" placeholder="Describe esta habilidad" [disabled]="catalogBusy"></textarea>
+            </label>
+            <div class="skill-editor-actions">
+              <button type="button" class="player-skills-refresh" [disabled]="catalogBusy"
+                (click)="cancelSkillEdit()">Cancelar</button>
+              <button type="submit" class="manage-skills-button"
+                [disabled]="catalogBusy || !skillName.trim()">
+                {{savingSkill ? 'Guardando…' : 'Guardar'}}
+              </button>
+            </div>
+          </form>
+
+          <ng-template #skillDetails>
+            <ng-container *ngIf="selectedCatalogSkill as skill; else chooseCatalogSkill">
+              <div class="catalog-detail-heading">
+                <span class="skill-summary-icon" aria-hidden="true">✦</span>
+                <div><h3>{{skill.name}}</h3><p>Detalle de la habilidad</p></div>
+              </div>
+              <section class="catalog-description">
+                <h4>Descripción</h4>
+                <p>{{skill.description || 'Esta habilidad no tiene descripción.'}}</p>
+              </section>
+              <div class="catalog-detail-actions">
+                <button type="button" class="catalog-action edit-action" [disabled]="catalogBusy"
+                  (click)="editSkill(skill)">Editar habilidad</button>
+                <button type="button" class="catalog-action delete-action" [disabled]="catalogBusy"
+                  (click)="deleteSkill(skill)">Eliminar habilidad</button>
+              </div>
+            </ng-container>
+          </ng-template>
+          <ng-template #chooseCatalogSkill>
+            <div class="catalog-detail-empty">
+              <span class="skill-summary-icon" aria-hidden="true">✦</span>
+              <strong>Selecciona una habilidad</strong>
+              <span>Elige una del catálogo o registra una nueva.</span>
+            </div>
+          </ng-template>
+        </aside>
       </div>
     </section>
   </div>

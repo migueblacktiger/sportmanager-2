@@ -104,22 +104,24 @@
         </label>
         <label>
           <span>Inicio de inscripciones <b>*</b></span>
-          <input type="datetime-local" name="registrationStartsAt" [(ngModel)]="form.registrationStartsAt" step="0.001" required>
+          <input type="datetime-local" name="registrationStartsAt" [(ngModel)]="form.registrationStartsAt" [attr.step]="editing ? '0.001' : '60'" required>
         </label>
         <label>
           <span>Cierre de inscripciones <b>*</b></span>
-          <input type="datetime-local" name="registrationEndsAt" [(ngModel)]="form.registrationEndsAt" [min]="form.registrationStartsAt" step="0.001" required>
+          <input type="datetime-local" name="registrationEndsAt" [(ngModel)]="form.registrationEndsAt" [min]="form.registrationStartsAt" [attr.step]="editing ? '0.001' : '60'" required>
         </label>
         <label>
           <span>Inicio del torneo <b>*</b></span>
-          <input type="datetime-local" name="startsAt" [(ngModel)]="form.startsAt" [min]="form.registrationEndsAt" step="0.001" required>
+          <input type="datetime-local" name="startsAt" [(ngModel)]="form.startsAt" [min]="form.registrationEndsAt" [attr.step]="editing ? '0.001' : '60'" required>
         </label>
       </fieldset>
-      <p class="date-rule">Reglas: inicio de inscripciones &lt; cierre de inscripciones ≤ inicio del torneo.</p>
+      <p class="date-rule" [class.invalid]="!validFields" role="status">
+        {{validationMessage || 'Reglas: el inicio de inscripciones debe ser anterior al cierre, que no puede ser posterior al inicio del torneo.'}}
+      </p>
     </div>
     <footer>
       <button type="button" class="dialog-cancel" [disabled]="saving" (click)="closeEditor()">Cancelar</button>
-      <button type="submit" class="btn btn-primary" [disabled]="saving || tournamentForm.invalid || !validFields">
+      <button type="submit" class="btn btn-primary" [disabled]="saving || !validFields">
         {{saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Registrar torneo'}}
       </button>
     </footer>
