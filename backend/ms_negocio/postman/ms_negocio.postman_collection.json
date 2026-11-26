@@ -1,0 +1,1634 @@
+{
+  "info": {
+    "name": "ms_negocio",
+    "description": "Colecci?n de endpoints de negocio. Prefijo global: /negocio. Define token con un Bearer token de ms_security; las rutas, salvo GET /negocio, est?n protegidas. Los cuerpos {} son plantillas: completa los campos seg?n el DTO de cada operaci?n.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "fanId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "groupId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "matchId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "phaseId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "playerId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "skillId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "sportId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "teamId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "tournamentId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "App",
+      "item": [
+        {
+          "name": "GET /negocio",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio",
+            "description": "Endpoint p?blico de comprobaci?n del servicio.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Competition Groups",
+      "item": [
+        {
+          "name": "POST /negocio/tournaments/{{tournamentId}}/phases/{{phaseId}}/groups",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/phases/{{phaseId}}/groups",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/phases/{{phaseId}}/groups",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/phases/{{phaseId}}/groups",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/groups/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/groups/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/groups/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/groups/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/groups/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/groups/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Final Phases",
+      "item": [
+        {
+          "name": "POST /negocio/tournaments/{{tournamentId}}/final-phases",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/final-phases",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/final-phases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/final-phases",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/final-phases/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/final-phases/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/final-phases/{{id}}/matches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/final-phases/{{id}}/matches",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/tournaments/{{tournamentId}}/final-phases/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/final-phases/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/tournaments/{{tournamentId}}/final-phases/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/final-phases/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Group Teams",
+      "item": [
+        {
+          "name": "POST /negocio/groups/{{groupId}}/teams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/groups/{{groupId}}/teams",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/groups/{{groupId}}/teams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/groups/{{groupId}}/teams",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/groups/{{groupId}}/teams/{{teamId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/groups/{{groupId}}/teams/{{teamId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Match Audience",
+      "item": [
+        {
+          "name": "POST /negocio/matches/{{matchId}}/audiences/tickets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/audiences/tickets",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/matches/{{matchId}}/audiences/tickets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/audiences/tickets",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/matches/{{matchId}}/audiences/tickets/{{fanId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/audiences/tickets/{{fanId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /negocio/matches/{{matchId}}/audiences/bets",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/audiences/bets",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/matches/{{matchId}}/audiences/bets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/audiences/bets",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/matches/{{matchId}}/audiences/bets/{{fanId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/audiences/bets/{{fanId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Match Attendances",
+      "item": [
+        {
+          "name": "POST /negocio/matches/{{matchId}}/attendances",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/attendances",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/matches/{{matchId}}/attendances",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/attendances",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/matches/{{matchId}}/attendances/{{fanId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/matches/{{matchId}}/attendances/{{fanId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Match Management",
+      "item": [
+        {
+          "name": "POST /negocio/tournaments/{{tournamentId}}/phases/{{phaseId}}/matches",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/phases/{{phaseId}}/matches",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/phases/{{phaseId}}/matches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/phases/{{phaseId}}/matches",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/matches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/matches/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/tournaments/{{tournamentId}}/matches/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/tournaments/{{tournamentId}}/matches/{{id}}/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{id}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/tournaments/{{tournamentId}}/matches/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Match Annotations",
+      "item": [
+        {
+          "name": "POST /negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/annotations/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Match Results",
+      "item": [
+        {
+          "name": "POST /negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/result",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/result",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/result",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/result",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/result",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/matches/{{matchId}}/result",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Matches",
+      "item": [
+        {
+          "name": "POST /negocio/phases/{{phaseId}}/matches",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/phases/{{phaseId}}/matches",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/phases/{{phaseId}}/matches",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/phases/{{phaseId}}/matches",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/matches/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/matches/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/matches/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/matches/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Player Skills",
+      "item": [
+        {
+          "name": "POST /negocio/player-skills",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/player-skills",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/player-skills/players/{{playerId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/player-skills/players/{{playerId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/player-skills/skills/{{skillId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/player-skills/skills/{{skillId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/player-skills/{{playerId}}/{{skillId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/player-skills/{{playerId}}/{{skillId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Player Teams",
+      "item": [
+        {
+          "name": "POST /negocio/player-teams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/player-teams",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/player-teams/teams/{{teamId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/player-teams/teams/{{teamId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/player-teams/players/{{playerId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/player-teams/players/{{playerId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/player-teams/{{id}}/finish",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/player-teams/{{id}}/finish",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Players",
+      "item": [
+        {
+          "name": "POST /negocio/players",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/players",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/players",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/players",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/players/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/players/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/players/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/players/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/players/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/players/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Skills",
+      "item": [
+        {
+          "name": "POST /negocio/habilidades",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/habilidades",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/habilidades",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/habilidades",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/habilidades/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/habilidades/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/habilidades/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/habilidades/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/habilidades/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/habilidades/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Sports",
+      "item": [
+        {
+          "name": "POST /negocio/sports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/sports",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/sports",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/sports",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/sports/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/sports/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/sports/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/sports/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/sports/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/sports/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Team Sports",
+      "item": [
+        {
+          "name": "POST /negocio/team-sports",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/team-sports",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/team-sports/teams/{{teamId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/team-sports/teams/{{teamId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/team-sports/sports/{{sportId}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/team-sports/sports/{{sportId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/team-sports/{{teamId}}/{{sportId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/team-sports/{{teamId}}/{{sportId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Teams",
+      "item": [
+        {
+          "name": "POST /negocio/teams",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/teams",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/teams",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/teams",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/teams/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/teams/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/teams/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/teams/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/teams/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/teams/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tournament Overview",
+      "item": [
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/overview",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/overview",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tournament Phases",
+      "item": [
+        {
+          "name": "POST /negocio/tournaments/{{tournamentId}}/phases",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/phases",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/phases",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/phases",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/phases/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/phases/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/phases/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/phases/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/phases/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/phases/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tournament Registrations",
+      "item": [
+        {
+          "name": "POST /negocio/tournaments/{{tournamentId}}/registrations",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/registrations",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{tournamentId}}/registrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/registrations",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/teams/{{teamId}}/registrations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/teams/{{teamId}}/registrations",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/tournaments/{{tournamentId}}/registrations/{{teamId}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{tournamentId}}/registrations/{{teamId}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tournaments",
+      "item": [
+        {
+          "name": "POST /negocio/tournaments",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/tournaments/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/tournaments/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/tournaments/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/tournaments/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/tournaments/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Venues",
+      "item": [
+        {
+          "name": "POST /negocio/venues",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/venues",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/venues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/venues",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /negocio/venues/{{id}}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/venues/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /negocio/venues/{{id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/negocio/venues/{{id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security. Reemplaza {} con los campos requeridos por el DTO."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /negocio/venues/{{id}}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/negocio/venues/{{id}}",
+            "description": "Ruta protegida. Requiere un Bearer token v?lido de ms_security."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

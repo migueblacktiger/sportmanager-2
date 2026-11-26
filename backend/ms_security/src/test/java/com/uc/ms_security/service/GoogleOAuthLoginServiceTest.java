@@ -74,7 +74,7 @@ class GoogleOAuthLoginServiceTest {
 
     @Test
     void reusesExistingExternalIdentity() {
-        User user = new User(); user.setId(9L); user.setEnabled(true);
+        User user = new User(); user.setId(9L); user.setEnabled(true); user.setAccountType(AccountType.EXTERNAL);
         ExternalIdentity externalIdentity = new ExternalIdentity(); externalIdentity.setUser(user);
         AuthResponseDTO response = org.mockito.Mockito.mock(AuthResponseDTO.class);
         when(verifierProvider.getIfAvailable()).thenReturn(verifier);

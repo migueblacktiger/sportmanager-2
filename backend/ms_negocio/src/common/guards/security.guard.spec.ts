@@ -1,12 +1,19 @@
 import { ExecutionContext, ForbiddenException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
-import axios from 'axios';
-import { SecurityGuard } from './security.guard';
+import { jest } from '@jest/globals';
 
-jest.mock('axios');
-const post = jest.mocked(axios.post);
-const isAxiosError = jest.mocked(axios.isAxiosError);
+jest.unstable_mockModule('axios', () => ({
+  default: {
+    post: jest.fn(),
+    isAxiosError: jest.fn(),
+  },
+}));
+
+const axios = await import('axios');
+const { SecurityGuard } = await import('./security.guard');
+const post = jest.mocked(axios.default.post);
+const isAxiosError = jest.mocked(axios.default.isAxiosError);
 
 describe('SecurityGuard', () => {
   let guard: SecurityGuard;

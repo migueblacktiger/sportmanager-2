@@ -152,7 +152,7 @@ class UserServiceTest {
         dto.setName("Juan David");
         dto.setEmail("juan@gmail.com");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(userRepository.findForPasswordRecoveryById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.existsByEmailAndIdNot("juan@gmail.com", 1L)).thenReturn(false);
         when(userRepository.save(existing)).thenReturn(existing);
         when(userMapper.toResponseDTO(existing))
@@ -172,7 +172,7 @@ class UserServiceTest {
         dto.setName("Juan David");
         dto.setEmail("otro@gmail.com");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(userRepository.findForPasswordRecoveryById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.existsByEmailAndIdNot("otro@gmail.com", 1L)).thenReturn(true);
 
         ApplicationException exception = assertThrows(
@@ -195,7 +195,7 @@ class UserServiceTest {
         dto.setEmail("juan@gmail.com");
         dto.setPassword("87654321");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existing));
+        when(userRepository.findForPasswordRecoveryById(1L)).thenReturn(Optional.of(existing));
         when(userRepository.existsByEmailAndIdNot("juan@gmail.com", 1L)).thenReturn(false);
         when(userRepository.save(existing)).thenReturn(existing);
         when(userMapper.toResponseDTO(existing))

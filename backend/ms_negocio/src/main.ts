@@ -5,9 +5,10 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const config = app.get(ConfigService);
   app.setGlobalPrefix('negocio');
   app.enableCors({
-    origin: 'http://localhost:4200',
+    origin: config.getOrThrow<string[]>('CORS_ORIGINS'),
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
@@ -16,6 +17,6 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
     transform: true,
   }));
-  await app.listen(app.get(ConfigService).getOrThrow<number>('PORT'));
+  await app.listen(config.getOrThrow<number>('PORT'));
 }
 void bootstrap();

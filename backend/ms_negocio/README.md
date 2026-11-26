@@ -47,6 +47,7 @@ node_modules incluido en el ZIP de referencia; no es necesario conservarlo en Gi
 | Variable | Uso |
 | --- | --- |
 | PORT | Puerto de negocio; ejemplo 3001 |
+| CORS_ORIGINS | Origenes del frontend separados por comas; por defecto `http://localhost:4200,http://127.0.0.1:4200` |
 | DB_HOST | Host MySQL; por defecto 127.0.0.1 |
 | DB_PORT | Puerto MySQL; por defecto 3306 |
 | DB_USERNAME | Usuario MySQL propio de negocio, obligatorio |
